@@ -1,8 +1,5 @@
 import { auth } from "@/auth";
 import { SigninButton } from "@/features/auth/components/signinButton";
-import { SignoutButton } from "@/features/auth/components/signoutButton";
-import Profile from "../profile/page";
-import { redirect } from "next/dist/server/api-utils";
 import { permanentRedirect } from "next/navigation";
 
 export default async function SignIn() {

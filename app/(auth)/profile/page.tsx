@@ -1,19 +1,32 @@
 import { auth } from '@/auth';
 import { SignoutButton } from '@/features/auth/components/signoutButton';
-import { User } from '@/features/auth/type';
+import Image from 'next/image';
+import { Session } from 'next-auth';
 
 const Profile = async () => {
-  // Check if user session exists
-  const session = await auth();
+  const session: Session | null = await auth();
 
-  // Extract user details from session
-  const user: User = session.user;
+  // Check if session or user is missing
+  if (!session || !session.user) {
+    return <div>Please sign in to continue.</div>;
+  }
+
+  //extract user info 
+  const { name, email, image } = session.user;
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <p>Name: {user.name}</p>
-      <p>Email: {user.email}</p>
-      <img src={user.image} alt="User image" className="w-32 h-32 rounded-full object-cover" />
+      <p>Name: {name}</p>
+      <p>Email: {email}</p>
+      {image && (
+        <Image
+          src={image}
+          alt="User image"
+          width={128}
+          height={128}
+          className="rounded-full object-cover"
+        />
+      )}
       <SignoutButton />
     </div>
   );
