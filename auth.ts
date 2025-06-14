@@ -43,11 +43,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             email: session.user.email,
           })
           .returning();
-
-        console.log(newuser);
       }
 
-      console.log(session);
       return session;
     },
   },
