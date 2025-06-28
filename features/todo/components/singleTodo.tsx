@@ -1,66 +1,65 @@
 "use client";
 
+// Component: SingleTodo
 import React, { useState } from "react";
-import { TodoSchema } from "@/features/todo/components/todoSchema";
+import { TodoSchema } from "@/features/todo/todoSchema";
 import { updateTodosStatus } from "@/features/todo/todoaction";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
-import EditTodoDialog from "@/features/todo/components/EditTodoDialog";
+import EditTodoDialog from "./EditTodoDialog";
 import { ShowDate } from "@/components/ShowDate";
+import { useTodo } from "@/store/todostore";
 
-interface SingleTodoProps {
-  todo: TodoSchema;
-}
-
-export const SingleTodo: React.FC<SingleTodoProps> = ({ todo }) => {
+export const SingleTodo = ({ todo }: { todo: TodoSchema }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [checked, setChecked] = useState(!!todo.isDone);
-  const [todoData, setTodoData] = useState<TodoSchema>(todo);
 
   const {
-    user_id,
     id,
+    user_id,
     name,
     description,
     category,
     priority,
     startDate,
     endDate,
-  } = todoData;
+    isDone,
+  } = todo;
 
-  const handleCheck = async () => {
-    const newStatus = !checked;
-    setChecked(newStatus);
-    await updateTodosStatus(user_id,id,newStatus);
+  const { toggleTodo } = useTodo();
+
+  // Toggle completion status
+  const handleToggle = async () => {
+    toggleTodo(id); // local toggle
+    await updateTodosStatus(user_id, id, !isDone); // backend update
   };
 
   return (
-    <div className="border p-4 rounded-md space-y-2">
-      <p><strong>Name:</strong> {name}</p>
-      <p><strong>Description:</strong> {description}</p>
-      <p><strong>Category:</strong> {category}</p>
-      <p><strong>Priority:</strong> {priority}</p>
+    <div className="rounded-md border p-4 space-y-2">
+      <p>{name}</p>
+      <p>{description}</p>
+      <p>{category}</p>
+      <p>{priority}</p>
 
+      {/* Dates */}
       {startDate && <ShowDate label="Start" date={startDate} />}
       {endDate && <ShowDate label="End" date={endDate} />}
 
+      {/* Done checkbox */}
       <div className="flex items-center gap-2">
-        <input type="checkbox" checked={checked} onChange={handleCheck} />
+        <input
+          type="checkbox"
+          checked={Boolean(isDone)}
+          onChange={handleToggle}
+        />
         <label>Mark as Done</label>
       </div>
 
+      {/* Edit Todo dialog */}
       <Button onClick={() => setIsEditing(true)}>Edit Todo</Button>
-
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <EditTodoDialog
-          initialData={todoData}
-          onUpdate={(updated) => {
-            setTodoData(updated);
-            setIsEditing(false);
-          }}
-        />
-      </Dialog>
+      <EditTodoDialog
+        initialData={todo}
+        open={isEditing}
+        onOpenChange={setIsEditing}
+      />
     </div>
   );
 };
-
