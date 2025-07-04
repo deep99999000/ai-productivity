@@ -1,24 +1,33 @@
 "use server";
 
 import { db } from "@/db";
+import { goalTable, subgoalTable } from "@/db/schema";
 import {
-  TodoSchema,
+  Todo,
   todoTable,
   type NewTodo,
 } from "@/features/todo/todoSchema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, getTableColumns } from "drizzle-orm";
 
 // get all todos for user
 export const getAllUserTodos = async (
   user_id: number
-): Promise<TodoSchema[] | null> => {
+): Promise<Todo[] | null> => {
   try {
     const allTodos = await db
-      .select()
+      .select({
+        ...getTableColumns(todoTable),
+        goalName: goalTable.name,
+        subgoalName: subgoalTable.name,
+      })
       .from(todoTable)
-      .where(eq(todoTable.user_id, user_id));
-    return allTodos;
+      .where(eq(todoTable.user_id, user_id))
+      .leftJoin(goalTable, eq(todoTable.goal_id, goalTable.id))
+      .leftJoin(subgoalTable, eq(todoTable.subgoal_id, subgoalTable.id));
+      console.log(allTodos);
+    return allTodos
   } catch (error) {
+    console.error("Error fetching todos:", error);
     return null;
   }
 };
@@ -28,7 +37,7 @@ export const updateTodosStatus = async (
   user_id: number,
   todo_id: number,
   newStatus: boolean
-): Promise<TodoSchema[] | null> => {
+): Promise<Todo[] | null> => {
   try {
     const updatedTodos = await db
       .update(todoTable)
@@ -42,7 +51,7 @@ export const updateTodosStatus = async (
 };
 
 // update todo data
-export const updatetodoData = async (todo: TodoSchema) => {
+export const updatetodoData = async (todo: Todo) => {
   const { id, user_id, name, description, category, priority, startDate, endDate } = todo;
   try {
     const updatedTodos = await db
@@ -68,3 +77,14 @@ export const newtodoaction = async (todo: NewTodo) => {
     console.log(error);
   }
 };
+
+export const deleteTodoFromdb = async(id: number) => {
+  try {
+    const deletedtodo = await db.delete(todoTable).where(eq(todoTable.id,id)).returning()
+    console.log(deletedtodo);
+    return deletedtodo
+  } catch (error) {
+    console.log(error);
+  }
+};
+

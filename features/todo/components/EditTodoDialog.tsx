@@ -13,14 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Controller, useForm } from "react-hook-form";
 
 // app logic imports
-import { TodoSchema } from "@/features/todo/todoSchema";
+import { Todo } from "@/features/todo/todoSchema";
 import { updatetodoData } from "@/features/todo/todoaction";
-import { useTodo } from "@/store/todostore";
+import { useTodo } from "@/features/todo/todostore";
 
 // component props interface
 interface EditTodoDialogProps {
   open: boolean;
-  initialData: TodoSchema;
+  initialData: Todo;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -35,12 +35,12 @@ const EditTodoDialog: React.FC<EditTodoDialogProps> = ({
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<TodoSchema>({ defaultValues: initialData });
+  } = useForm<Todo>({ defaultValues: initialData });
 
   const { updateTodo } = useTodo();
 
   // local + server update
-  const handleUpdate = (data: TodoSchema) => {
+  const handleUpdate = (data: Todo) => {
     updateTodo(data); // local update
     onOpenChange(false); // close dialog
     updatetodoData(data); // backend sync

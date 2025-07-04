@@ -1,15 +1,14 @@
-import React from "react";
+// app/dashboard/todos/page.tsx
 import { getAllUserTodos } from "@/features/todo/todoaction";
 import TodoPage from "@/features/todo/components/TodoPage";
 import { getuser } from "@/lib/actions/getuser";
 
 export const dynamic = "force-dynamic";
 
-const Todo = async () => {
-  const user_id = await getuser(); // get user id
-  const allTodos = await getAllUserTodos(user_id); // fetch all todos
+export default async function DashboardTodosPage() {
+  const user_id = await getuser();
+  const allTodos = await getAllUserTodos(user_id);
 
-  // show error if no todo found
   if (!allTodos || allTodos.length === 0) {
     return (
       <div className="p-4 text-center text-red-600">
@@ -18,7 +17,5 @@ const Todo = async () => {
     );
   }
 
-  return <TodoPage allTodo={allTodos} />; // pass data to todo page
-};
-
-export default Todo;
+  return <TodoPage allTodo={allTodos} />;
+}
