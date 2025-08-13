@@ -4,10 +4,9 @@ import React, { useEffect, useState } from "react";
 
 interface ShowDateProps {
   date: Date;
-  label: string;
 }
 
-export const ShowDate: React.FC<ShowDateProps> = ({ date, label }) => {
+export const ShowDate: React.FC<ShowDateProps> = ({ date }) => {
   const [formattedDate, setFormattedDate] = useState("");
 
   useEffect(() => {
@@ -24,8 +23,8 @@ export const ShowDate: React.FC<ShowDateProps> = ({ date, label }) => {
   }, [date]);
 
   return (
-    <p>
-      {label}: {formattedDate}
-    </p>
+    <span>
+      {formattedDate}
+    </span>
   );
 };

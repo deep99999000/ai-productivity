@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,10 +14,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Deep Productivity",
-  description: "Ai based next level Productivity",
-};
 
 export default async function RootLayout({
   children,
@@ -26,7 +21,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const userId = await getuser()
-
   return (
     <html lang="en">
       <body

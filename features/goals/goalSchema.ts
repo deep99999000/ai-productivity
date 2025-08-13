@@ -2,16 +2,16 @@ import {
   pgTable,
   integer,
   varchar,
-  boolean,
   timestamp,
-  json,
+  bigint,
 } from "drizzle-orm/pg-core";
 import { usersTable } from "@/db/schema";
-import type { Todo } from "@/features/todo/todoSchema";
-import { subgoalTable } from "@/features/goals/subGoalschema";
+import { useSubgoal } from "@/features/subGoals/subgoalStore";
+import { progress } from "motion/react";
+
 
 export const goalTable = pgTable("goaltable", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: bigint("id", { mode: "number" }).primaryKey(),
 
   name: varchar("name", { length: 255 }).notNull(),
   description: varchar("description", { length: 2000 }),
@@ -19,8 +19,10 @@ export const goalTable = pgTable("goaltable", {
   user_id: integer("user_id")
     .notNull()
     .references(() => usersTable.id),
-
+  status: varchar("status").default("Not Started").notNull(),
   category: varchar("category", { length: 100 }),
+  endDate:timestamp(),
 });
 
 export type Goal = typeof goalTable.$inferSelect;
+export type NewGoal = typeof goalTable.$inferInsert;  

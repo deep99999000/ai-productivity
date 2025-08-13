@@ -1,35 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { useForm } from "react-hook-form";
+import BaseDialog from "@/components/BaseDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import SelectComponent from "@/components/Selectcomponent";
-import { Controller, useForm } from "react-hook-form";
-import { newtodoaction } from "@/features/todo/todoaction";
-import type { NewTodo, Todo } from "@/features/todo/todoSchema";
+import { Label } from "@/components/ui/label";
+import { SelectField } from "@/components/form/SelectField";
+import { DateField } from "@/components/form/DateField";
 import { useTodo } from "@/features/todo/todostore";
 import useUser from "@/store/useUser";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { DateTimePicker } from "@/components/DateTimePicker";
-import { Label } from "@/components/ui/label";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { newtodoaction } from "@/features/todo/todoaction";
+import type { NewTodo } from "@/features/todo/todoSchema";
+import { Sparkles, FileText, Tag, Flag, Calendar, Target } from "lucide-react";
+import { log } from "console";
+
 interface NewTodoDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+
+  defaultSubgoalId?: number | null;
 }
 
-const NewTodoDialog = ({ open, onOpenChange }: NewTodoDialogProps) => {
-  const user_id = useUser((s) => s.user);
+export default function NewTodoDialog({ isOpen, setIsOpen,defaultSubgoalId = null  }: NewTodoDialogProps) {
+  const userId = useUser((s) => s.user);
   const { addTodo } = useTodo();
 
   const {
@@ -42,188 +36,123 @@ const NewTodoDialog = ({ open, onOpenChange }: NewTodoDialogProps) => {
     defaultValues: {
       category: "Personal",
       priority: "Low",
-    },
-  });
-  const [advanceoption, setAdvanceoption] = useState(false);
-
-  const onSubmit = async (data: NewTodo) => {
-    const {
-      name,
-      description = "",
-      category = "Personal",
-      priority = "Low",
-    } = data;
-
-    const newTodo: Todo = {
-      id: Date.now() + Math.floor(Math.random() * 1000),
-      user_id: user_id ?? 0,
-      name,
-      description,
-      category,
-      priority,
-      isDone: false,
+      name: "",
+      description: "",
       startDate: null,
       endDate: null,
-    };
+      goal_id: null,
+      subgoal_id: defaultSubgoalId,
+    },
+  });
 
-    addTodo(newTodo);
-    onOpenChange(false);
+  // Form Submit Handler
+  const onSubmit = async (data: NewTodo) => {
+    console.log("data",data);
+    
+    addTodo(data, userId ?? 0);
     reset();
-    await newtodoaction({ name, description, category, priority, user_id });
+    setIsOpen(false);
+    await newtodoaction({ ...data, user_id: userId });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-lg sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gray-800">
-            Create New Task
-          </DialogTitle>
-        </DialogHeader>
+    <BaseDialog
+      isOpen={isOpen}
+      setisOpen={setIsOpen}
+      title="Create New Todo"
+      description="Organize your tasks efficiently"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+        
+        {/* Task Name */}
+        <div className="space-y-2">
+          {/* Label */}
+          <Label htmlFor="name" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-500" />
+            Task Name *
+          </Label>
+          <Input
+            id="name"
+            placeholder="What needs to be done?"
+            {...register("name", { required: "Task name is required" })}
+          />
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
+          )}
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
-          {/* Task Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-gray-700">
-              Task Name *
+        {/* Description */}
+        <div className="space-y-2">
+          {/* Label */}
+          <Label htmlFor="description" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-gray-500" />
+            Description
+          </Label>
+          <Input
+            id="description"
+            placeholder="Optional details"
+            {...register("description")}
+          />
+        </div>
+
+        {/* Category & Priority */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2 w-full">
+            {/* Label */}
+            <Label htmlFor="category" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-purple-500" />
+              Category
             </Label>
-            <Input
-              id="name"
-              placeholder="What needs to be done?"
-              className="focus-visible:ring-2 focus-visible:ring-primary"
-              {...register("name", { required: "Task name is required" })}
+            <SelectField<NewTodo>
+              name="category"
+              control={control}
+              options={["Personal", "Goal", "Tech"]}
             />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name.message}</p>
-            )}
           </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-gray-700">
-              Description
+          <div className="space-y-2 w-full">
+            {/* Label */}
+            <Label htmlFor="priority" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Flag className="w-4 h-4 text-red-500" />
+              Priority
             </Label>
-            <Input
-              id="description"
-              placeholder="Add details (optional)"
-              className="focus-visible:ring-2 focus-visible:ring-primary"
-              {...register("description")}
+            <SelectField<NewTodo>
+              name="priority"
+              control={control}
+              options={["Low", "Medium", "High"]}
             />
           </div>
+        </div>
 
-          {/* Category & Priority Row */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Category */}
-            <div className="space-y-2">
-              <Label className="text-gray-700">Category</Label>
-              <Controller
-                name="category"
-                control={control}
-                render={({ field }) => (
-                  <SelectComponent
-                    onchangefunc={field.onChange}
-                    deafultvalue={field.value}
-                    allvalues={["Personal", "Goal", "Tech"]}
-                  />
-                )}
-              />
-            </div>
-
-            {/* Priority */}
-            <div className="space-y-2">
-              <Label className="text-gray-700">Priority</Label>
-              <Controller
-                name="priority"
-                control={control}
-                render={({ field }) => (
-                  <SelectComponent
-                    onchangefunc={field.onChange}
-                    deafultvalue={field.value}
-                    allvalues={["Low", "Medium", "High"]}
-                  />
-                )}
-              />
-            </div>
+        {/* Start & End Dates */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            {/* Label */}
+            <Label htmlFor="startDate" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-green-500" />
+              Start Date
+            </Label>
+            <DateField<NewTodo> name="startDate" control={control} />
           </div>
-
-          {/* Date & Time Row */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Start Date */}
-            <div className="space-y-2">
-              <Label className="text-gray-700">Start Date</Label>
-              <Controller
-                name="startdate"
-                control={control}
-                render={({ field }) => (
-                  <DateTimePicker field={field} className="w-full" />
-                )}
-              />
-            </div>
-
-            {/* End Date */}
-            <div className="space-y-2">
-              <Label className="text-gray-700">End Date</Label>
-              <Controller
-                name="enddate"
-                control={control}
-                render={({ field }) => (
-                  <DateTimePicker field={field} className="w-full" />
-                )}
-              />
-            </div>
+          <div className="space-y-2">
+            {/* Label */}
+            <Label htmlFor="endDate" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-green-500" />
+              End Date
+            </Label>
+            <DateField<NewTodo> name="endDate" control={control} />
           </div>
+        </div>
 
-          <Accordion type="single" collapsible>
-            <AccordionItem value="item-1">
-              <AccordionTrigger>advance option</AccordionTrigger>
-              <AccordionContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Goal */}
-                  <div className="space-y-2">
-                    <Label className="text-gray-700">Goal</Label>
-                    <Controller
-                      name="goal"
-                      control={control}
-                      render={({ field }) => (
-                        <SelectComponent
-                          onchangefunc={field.onChange}
-                          deafultvalue={field.value}
-                          allvalues={["Personal", "Goal", "Tech"]}
-                        />
-                      )}
-                    />
-                  </div>
-
-                  {/* Subgoal */}
-                  <div className="space-y-2">
-                    <Label className="text-gray-700">Subgoal</Label>
-                    <Controller
-                      name="Subgoal"
-                      control={control}
-                      render={({ field }) => (
-                        <SelectComponent
-                          onchangefunc={field.onChange}
-                          deafultvalue={field.value}
-                          allvalues={["Low", "Medium", "High"]}
-                        />
-                      )}
-                    />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full  py-5 bg-primary hover:bg-primary-dark"
-          >
-            Create Task
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          size="lg"
+          className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 w-full flex items-center justify-center"
+        >
+          <Target className="w-4 h-4 mr-2" />
+          Create Task
+        </Button>
+      </form>
+    </BaseDialog>
   );
-};
-
-export default NewTodoDialog;
+}

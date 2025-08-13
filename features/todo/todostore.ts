@@ -1,38 +1,54 @@
-import { create } from 'zustand'
-import { TodoSchema } from '@/features/todo/todoSchema'
+ import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Todo, NewTodo } from "@/features/todo/todoSchema";
 
 interface TodoState {
-  todos: TodoSchema[]
-  setTodos: (newTodos: TodoSchema[]) => void
-  addTodo: (todo: TodoSchema) => void
-  updateTodo: (updatedTodo: TodoSchema) => void
-  deleteTodo: (id: number) => void
-  toggleTodo: (id: number) => void
+  todos: Todo[];
+  setTodos: (newTodos: Todo[]) => void;
+  addTodo: (newTodo: NewTodo, user_id: number) => void;
+  updateTodo: (updatedTodo: Todo) => void;
+  deleteTodo: (id: number) => void;
+  toggleTodo: (id: number) => void;
 }
 
-export const useTodo = create<TodoState>((set) => ({
-  todos: [],
+export const useTodo = create<TodoState>()(
+  persist(
+    (set) => ({
+      todos: [],
 
-  setTodos: (newTodos) => set({ todos: newTodos }),
+      setTodos: (newTodos) => set({ todos: newTodos }),
 
-  addTodo: (todo) =>
-    set((state) => ({ todos: [todo, ...state.todos] })),
+      addTodo: (newTodo, user_id) =>
+        set((state) => {
+          const fullTodo = {
+            ...newTodo,
+            id: Math.floor(Math.random() * 1000000),
+            user_id,
+          } as Todo;
+          return { todos: [fullTodo, ...state.todos] };
+        }),
 
-  updateTodo: (updatedTodo) =>
-    set((state) => ({
-      todos: state.todos.map((todo) =>
-        todo.id === updatedTodo.id ? updatedTodo : todo
-      ),
-    })),
+      updateTodo: (updatedTodo) =>
+        set((state) => ({
+          todos: state.todos.map((todo) =>
+            todo.id === updatedTodo.id ? updatedTodo : todo
+          ),
+        })),
 
-  deleteTodo: (id) =>
-    set((state) => ({
-      todos: state.todos.filter((todo) => todo.id !== id),
-    })),
+      deleteTodo: (id) =>
+        set((state) => ({
+          todos: state.todos.filter((todo) => todo.id !== id),
+        })),
 
-  toggleTodo: (id) => 
-    set((state) => ({
-      todos:state.todos.map((todo) => todo.id === id ? {...todo,isDone:!todo.isDone}:todo)
-    }))
-    
-}))
+      toggleTodo: (id) =>
+        set((state) => ({
+          todos: state.todos.map((todo) =>
+            todo.id === id ? { ...todo, isDone: !todo.isDone } : todo
+          ),
+        })),
+    }),
+    {
+      name: "todo-store", // localStorage key
+    }
+  )
+);        

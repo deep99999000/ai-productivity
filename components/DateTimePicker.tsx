@@ -1,96 +1,76 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import * as React from "react";
 import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
-  PopoverTrigger,
   PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ControllerRenderProps } from "react-hook-form";
 
-export function DateTimePicker({ field }: { field: ControllerRenderProps }) {
-  const [dateOnly, setDateOnly] = useState<Date | null>(null);
-  const [hour, setHour] = useState("12");
-  const [minute, setMinute] = useState("00");
-  const [ampm, setAmPm] = useState("AM");
+interface DateTimePickerProps {
+  date: Date | null | undefined;
+  setDate: (date: Date) => void;
+  label?: string;
+}
 
-  useEffect(() => {
-    if (!dateOnly) return;
+export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
+  const [open, setOpen] = React.useState(false);
 
-    let h = parseInt(hour);
-    const m = parseInt(minute);
-    if (ampm === "PM" && h < 12) h += 12;
-    if (ampm === "AM" && h === 12) h = 0;
+  const handleDateChange = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+    const updatedDate = new Date(selectedDate);
+    if (date) {
+      updatedDate.setHours(date.getHours());
+      updatedDate.setMinutes(date.getMinutes());
+    }
+    setDate(updatedDate);
+    setOpen(false);
+  };
 
-    const finalDate = new Date(dateOnly);
-    finalDate.setHours(h);
-    finalDate.setMinutes(m);
-    field.onChange(finalDate);
-  }, [dateOnly, hour, minute, ampm]);
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!date) return;
+    const [hours, minutes] = e.target.value.split(":").map(Number);
+    const updatedDate = new Date(date);
+    updatedDate.setHours(hours);
+    updatedDate.setMinutes(minutes);
+    setDate(updatedDate);
+  };
 
   return (
-    <div className="w-full max-w-sm space-y-2">
-      <Popover>
+    <div className="grid gap-2">
+      {/* {label && <label className="text-sm font-medium">{label}</label>} */}
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
-            className="w-full justify-start text-left font-medium shadow-sm rounded-lg"
+            variant={"outline"}
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
           >
-            {field.value ? format(field.value, "PPP p") : "Pick date & time"}
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, "PPP p") : <span>Pick date & time</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-4 space-y-4 rounded-2xl shadow-xl border border-muted">
+        <PopoverContent className="w-auto p-2">
           <Calendar
             mode="single"
-            selected={dateOnly ?? undefined}
-            onSelect={(d) => d && setDateOnly(d)}
+            selected={date || new Date()}
+            onSelect={handleDateChange}
             initialFocus
           />
-
-          <div className="grid grid-cols-3 gap-2 items-end">
-            {/* Hour */}
-            <div>
-              <Label className="text-xs">Hour</Label>
-              <Input
-                type="number"
-                min={1}
-                max={12}
-                value={hour}
-                onChange={(e) => setHour(e.target.value)}
-                className="text-center rounded-lg"
-              />
-            </div>
-
-            {/* Minute */}
-            <div>
-              <Label className="text-xs">Minute</Label>
-              <Input
-                type="number"
-                min={0}
-                max={59}
-                value={minute}
-                onChange={(e) => setMinute(e.target.value)}
-                className="text-center rounded-lg"
-              />
-            </div>
-
-            {/* AM/PM */}
-            <div>
-              <Label className="text-xs">AM/PM</Label>
-              <select
-                value={ampm}
-                onChange={(e) => setAmPm(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-2 py-1 text-sm"
-              >
-                <option value="AM">AM</option>
-                <option value="PM">PM</option>
-              </select>
-            </div>
+          <div className="mt-2 flex items-center gap-2">
+            <Input
+              type="time"
+              defaultValue={date ? format(date, "HH:mm") : "00:00"}
+              onChange={handleTimeChange}
+            />
           </div>
         </PopoverContent>
       </Popover>

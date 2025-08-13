@@ -1,65 +1,42 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
-import { Todo } from "@/features/todo/todoSchema";
+import { useEffect, useState } from "react";
 import { useTodo } from "@/features/todo/todostore";
-import NewTodo from "@/features/todo/components/NewTodo";
-import { SingleTodo } from "@/features/todo/components/SingleTodo";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useDialog } from "@/hooks/usedialog";
+import NewTodoDialog from "@/features/todo/components/NewTodo";
+import TodoHeader from "@/features/todo/components/TodoHeader";
+import TodoEmptyState from "@/features/todo/components/TodoEmptyStateTodoEmptyState";
+import TodoStats from "@/features/todo/components/TodoStats";
+import TodoList from "@/features/todo/components/TodoList";
+import type { Todo } from "@/features/todo/todoSchema";
 
-const TodoPage = ({ allTodo }: { allTodo: Todo[] }) => {
+export default function TodoPage({ allTodo }: { allTodo: Todo[] }) {
   const { todos, setTodos } = useTodo();
-  const [isNewOpen, setIsNewOpen] = useState(false);
-  const [search, setsearch] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const { isOpen, open, close } = useDialog();
 
   useEffect(() => {
     setTodos(allTodo);
   }, [allTodo, setTodos]);
-  useEffect(() => {
-    console.log(search);
-  }, [search]);
+
+  const completedTodos = todos.filter((t) => t.isDone).length;
+  const totalTodos = todos.length;
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Todos</h1>
-        <div className="flex  gap-3">
-          <Input
-            placeholder="search todo"
-            onChange={(e) => setsearch(e.target.value)}
-            className="w-full sm:w-64 rounded-lg"
-          />
-          <Button onClick={() => setIsNewOpen(true)} className="gap-2">
-            <PlusCircle className="h-4 w-4" />
-            New Todo
-          </Button>
-        </div>
-      </div>
-
-      {/* New Todo Dialog */}
-      {isNewOpen && <NewTodo open={isNewOpen} onOpenChange={setIsNewOpen} />}
-
-      {/* Todo List */}
-      <div className="space-y-4">
-        {todos.length > 0 ? (
-          todos
-            .filter((todo: Todo) =>
-              search
-                ? todo.name.toLowerCase().includes(search.toLowerCase())
-                : true
-            )
-            .map((todo: Todo) => <SingleTodo key={todo.id} todo={todo} />)
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <TodoHeader searchText={searchText} setSearchText={setSearchText} openDialog={open} totalTodos={totalTodos} />
+        {totalTodos === 0 ? (
+          <TodoEmptyState onCreate={open} />
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No todos found. Add one!
-          </p>
+          <>
+            <TodoStats total={totalTodos} completed={completedTodos} />
+            <TodoList todos={todos.filter((t) =>
+              searchText ? t.name.toLowerCase().includes(searchText.toLowerCase()) : true
+            )} searchText={searchText} />
+          </>
         )}
+        <NewTodoDialog isOpen={isOpen} setIsOpen={close} />
       </div>
     </div>
   );
-};
-
-export default TodoPage;
+}

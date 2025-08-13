@@ -24,7 +24,6 @@ export const getAllUserTodos = async (
       .where(eq(todoTable.user_id, user_id))
       .leftJoin(goalTable, eq(todoTable.goal_id, goalTable.id))
       .leftJoin(subgoalTable, eq(todoTable.subgoal_id, subgoalTable.id));
-      console.log(allTodos);
     return allTodos
   } catch (error) {
     console.error("Error fetching todos:", error);
@@ -33,11 +32,25 @@ export const getAllUserTodos = async (
 };
 
 // update todo status (done/undone)
+export type upTodo = {
+  id: number;
+  name: string;
+  description: string | null;
+  user_id: number;
+  isDone: boolean | null;
+  category: string | null;
+  priority: string | null;
+  startDate: Date | null;
+  endDate: Date | null;
+  goal_id: number | null;
+  subgoal_id: number | null;
+};
+
 export const updateTodosStatus = async (
   user_id: number,
   todo_id: number,
   newStatus: boolean
-): Promise<Todo[] | null> => {
+): Promise<upTodo[] | null> => {
   try {
     const updatedTodos = await db
       .update(todoTable)
@@ -66,18 +79,18 @@ export const updatetodoData = async (todo: Todo) => {
 
 // add new todo
 export const newtodoaction = async (todo: NewTodo) => {
-  const { name, description, category, priority, user_id } = todo;
+  const { name, description, category, priority, user_id,startDate,endDate,subgoal_id } = todo;
   try {
     const newTodos = await db
       .insert(todoTable)
-      .values({ name, description, category, priority, user_id })
+      .values({ name, description, category, priority, user_id,startDate,endDate,subgoal_id })
       .returning();
     return newTodos;
   } catch (error) {
     console.log(error);
   }
 };
-
+//delete todo
 export const deleteTodoFromdb = async(id: number) => {
   try {
     const deletedtodo = await db.delete(todoTable).where(eq(todoTable.id,id)).returning()

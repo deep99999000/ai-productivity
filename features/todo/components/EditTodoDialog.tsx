@@ -1,117 +1,163 @@
 "use client";
 
-// UI & form imports
-import SelectComponent from "@/components/Selectcomponent";
+import React from "react";
+import { useForm } from "react-hook-form";
+import BaseDialog from "@/components/BaseDialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Controller, useForm } from "react-hook-form";
-
-// app logic imports
-import { Todo } from "@/features/todo/todoSchema";
-import { updatetodoData } from "@/features/todo/todoaction";
+import { Label } from "@/components/ui/label";
+import { SelectField } from "@/components/form/SelectField";
+import { DateField } from "@/components/form/DateField";
 import { useTodo } from "@/features/todo/todostore";
+import { updatetodoData } from "@/features/todo/todoaction";
+import type { Todo } from "@/features/todo/todoSchema";
+import {
+  Sparkles,
+  FileText,
+  Tag,
+  Flag,
+  Calendar,
+  Save,
+  Target,
+} from "lucide-react";
 
-// component props interface
 interface EditTodoDialogProps {
   open: boolean;
   initialData: Todo;
-  onOpenChange: (open: boolean) => void;
+  setisOpen: (open: boolean) => void;
 }
 
-const EditTodoDialog: React.FC<EditTodoDialogProps> = ({
+export default function EditTodoDialog({
   open,
   initialData,
-  onOpenChange,
-}) => {
-  // form setup with default values
+  setisOpen,
+}: EditTodoDialogProps) {
+  const { updateTodo } = useTodo();
+
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<Todo>({ defaultValues: initialData });
+  } = useForm<Todo>({
+    defaultValues: initialData,
+  });
 
-  const { updateTodo } = useTodo();
-
-  // local + server update
+  // Form submit handler
   const handleUpdate = (data: Todo) => {
-    updateTodo(data); // local update
-    onOpenChange(false); // close dialog
-    updatetodoData(data); // backend sync
+    updateTodo(data); // local store update
+    setisOpen(false); // close dialog
+    updatetodoData(data); // backend update
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Update Todo</DialogTitle>
-        </DialogHeader>
+    <BaseDialog
+      isOpen={open}
+      setisOpen={setisOpen}
+      title="Edit Todo"
+      description="Update your task details"
+    >
+      <form onSubmit={handleSubmit(handleUpdate)} className="space-y-4 mt-4">
+        {/* Task Name */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="name"
+            className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 text-blue-500" />
+            Task Name *
+          </Label>
+          <Input
+            id="name"
+            placeholder="What needs to be done?"
+            {...register("name", { required: "Task name is required" })}
+          />
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
+          )}
+        </div>
 
-        <form onSubmit={handleSubmit(handleUpdate)} className="space-y-4">
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
-            <Input
-              placeholder="Enter task name"
-              {...register("name", { required: true })}
-            />
-          </div>
+        {/* Description */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="description"
+            className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4 text-gray-500" />
+            Description
+          </Label>
+          <Input
+            id="description"
+            placeholder="Optional details"
+            {...register("description")}
+          />
+        </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <Input
-              placeholder="Enter description"
-              {...register("description")}
-            />
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Category</label>
-            <Controller
+        {/* Category & Priority */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2 w-full">
+            <Label
+              htmlFor="category"
+              className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+            >
+              <Tag className="w-4 h-4 text-purple-500" />
+              Category
+            </Label>
+            <SelectField<Todo>
               name="category"
               control={control}
-              render={({ field }) => (
-                <SelectComponent
-                  onchangefunc={field.onChange}
-                  deafultvalue={field.value || ""}
-                  allvalues={["Personal", "Goal", "Tech"]}
-                />
-              )}
+              options={["Personal", "Goal", "Tech"]}
             />
           </div>
-
-          {/* Priority */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Priority</label>
-            <Controller
+          <div className="space-y-2 w-full">
+            <Label
+              htmlFor="priority"
+              className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+            >
+              <Flag className="w-4 h-4 text-red-500" />
+              Priority
+            </Label>
+            <SelectField<Todo>
               name="priority"
               control={control}
-              render={({ field }) => (
-                <SelectComponent
-                  onchangefunc={field.onChange}
-                  deafultvalue={field.value || ""}
-                  allvalues={["Low", "Medium", "High"]}
-                />
-              )}
+              options={["Low", "Medium", "High"]}
             />
           </div>
+        </div>
 
-          {/* Submit */}
-          <Button type="submit" className="w-full">
-            Save Changes
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+        {/* Start & End Dates */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label
+              htmlFor="startDate"
+              className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+            >
+              <Calendar className="w-4 h-4 text-green-500" />
+              Start Date
+            </Label>
+            <DateField<Todo> name="startDate" control={control} />
+          </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor="endDate"
+              className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+            >
+              <Calendar className="w-4 h-4 text-green-500" />
+              End Date
+            </Label>
+            <DateField<Todo> name="endDate" control={control} />
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+        >
+          <Target className="w-4 h-4 mr-2" />
+          Save Changes
+        </Button>
+      </form>
+    </BaseDialog>
   );
-};
-
-export default EditTodoDialog;
+}

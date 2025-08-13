@@ -23,7 +23,7 @@ const SelectComponent: React.FC<SelectComponentProps> = ({
       onValueChange={onchangefunc}
       defaultValue={deafultvalue || allvalues[0]}
     >
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger className="w-full">
         <SelectValue placeholder="Select option" />
       </SelectTrigger>
       <SelectContent>
