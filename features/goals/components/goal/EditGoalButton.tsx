@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import EditGoalDialog from '@/features/goals/components/EditGoalDialog';
+import EditGoalDialog from '@/features/goals/components/goal/EditGoalDialog';
 import type { Goal } from '@/features/goals/goalSchema';
 import { useDialog } from '@/hooks/usedialog';
 import { Pencil } from 'lucide-react'

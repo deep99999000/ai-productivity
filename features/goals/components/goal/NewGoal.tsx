@@ -9,9 +9,10 @@ import type { NewGoal } from "@/features/goals/goalSchema";
 import { useGoal } from "@/features/goals/GoalStore";
 import useUser from "@/store/useUser";
 import { Label } from "@radix-ui/react-label";
-import { Target, Sparkles, Calendar, Tag, FileText } from "lucide-react";
-import React from "react";
+import { Target, Sparkles, Calendar, Tag, FileText, Loader2, Wand2 } from "lucide-react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import axios from "axios"; // 👈 import axios
 
 const NewGoalDialog = ({
   isOpen,
@@ -20,7 +21,7 @@ const NewGoalDialog = ({
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
 }) => {
-  const { register, control, handleSubmit, reset } = useForm<NewGoal>({
+  const { register, control, handleSubmit, reset, setValue } = useForm<NewGoal>({
     defaultValues: {
       name: "",
       description: "",
@@ -28,13 +29,54 @@ const NewGoalDialog = ({
       status: "Not Started",
     },
   });
+
   const { user } = useUser();
   const { addGoal } = useGoal();
+
+  // Loading states for refinement
+  const [loadingName, setLoadingName] = useState(false);
+  const [loadingDesc, setLoadingDesc] = useState(false);
+
+  // Call refine name API
+  const refineName = async (name: string) => {
+    try {
+      setLoadingName(true);
+      const res = await axios.post("/api/content/refine/name", {
+        type: "goal",
+        name,
+      });
+      if (res.data?.refinedName) {
+        setValue("name", res.data.refinedName); // update form field
+      }
+    } catch (err) {
+      console.error("Refine name error:", err);
+    } finally {
+      setLoadingName(false);
+    }
+  };
+
+  // Call refine description API
+  const refineDescription = async (description: string) => {
+    try {
+      setLoadingDesc(true);
+      const res = await axios.post("/api/content/refine/description", {
+        type: "goal",
+        description,
+      });
+      if (res.data?.refinedDescription) {
+        setValue("description", res.data.refinedDescription); // update form field
+      }
+    } catch (err) {
+      console.error("Refine description error:", err);
+    } finally {
+      setLoadingDesc(false);
+    }
+  };
 
   // Form Submit Handler
   const onSub = async (data: NewGoal) => {
     const id = generateUniqueId();
-console.log("Creating new goal with ID:",id);
+    console.log("Creating new goal with ID:", id);
 
     // Add to local state
     addGoal({
@@ -71,40 +113,96 @@ console.log("Creating new goal with ID:",id);
           {/* Form */}
           <form onSubmit={handleSubmit(onSub)} className="space-y-5">
             {/* Goal Name */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="name"
-                className="text-sm font-semibold text-gray-700 flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4 text-blue-500" />
-                Goal Name *
-              </Label>
-              <Input
-                id="name"
-                placeholder="What do you want to achieve?"
-                {...register("name", { required: true })}
-                className="h-11 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
-              />
-            </div>
+           <div className="space-y-2">
+  <Label
+    htmlFor="name"
+    className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+  >
+    <Sparkles className="w-4 h-4 text-blue-500" />
+    Goal Name *
+  </Label>
+  <div className="relative w-full">
+    <Input
+      id="name"
+      placeholder="What do you want to achieve?"
+      {...register("name", { required: true })}
+      className="h-11 px-4 pr-12 w-full border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+    />
+<Button
+  type="button"
+  size="sm"
+  variant="ghost"
+  onClick={async () => {
+    const current = (document.getElementById("name") as HTMLInputElement)?.value;
+    if (current) await refineName(current);
+  }}
+  disabled={loadingName}
+  className="absolute right-2 top-2 h-8 w-8 p-0 rounded-lg 
+             bg-gradient-to-r from-blue-500 to-purple-600 
+             hover:from-blue-600 hover:to-purple-700 text-white shadow-md 
+             hover:shadow-lg transition-all duration-200 
+             disabled:opacity-50 disabled:cursor-not-allowed"
+  title="Enhance with AI"
+>
+  {loadingName ? (
+    <Loader2 className="w-4 h-4 animate-spin" />
+  ) : (
+    <Wand2 className="w-4 h-4" />
+  )}
+</Button>
 
-            {/* Description */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="description"
-                className="text-sm font-semibold text-gray-700 flex items-center gap-2"
-              >
-                <FileText className="w-4 h-4 text-gray-500" />
-                Description
-              </Label>
-              <Input
-                id="description"
-                placeholder="Add details about your goal"
-                {...register("description")}
-                className="h-11 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
-              />
-            </div>
+  </div>
+</div>
 
-            {/*Category, Status, Date*/}
+{/* Description */}
+<div className="space-y-2">
+  <Label
+    htmlFor="description"
+    className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+  >
+    <FileText className="w-4 h-4 text-gray-500" />
+    Description
+  </Label>
+  <div className="relative w-full">
+   <textarea
+  id="description"
+  placeholder="Add details about your goal"
+  {...register("description")}
+  rows={3} // 👈 shows 3 lines
+  className="px-4 py-2 flex-1 border-2 border-gray-200 rounded-lg 
+             focus:border-blue-500 focus:ring-2 focus:ring-blue-100 
+             transition-all duration-200 resize-none w-full"
+/>
+
+<Button
+  type="button"
+  size="sm"
+  variant="ghost"
+  onClick={async () => {
+    const current = (document.getElementById("description") as HTMLInputElement)?.value;
+    if (current) await refineDescription(current);
+  }}
+  disabled={loadingDesc}
+  className="absolute right-2 top-2 h-8 w-8 p-0 rounded-lg 
+             bg-gradient-to-r from-blue-500 to-purple-600 
+             hover:from-blue-600 hover:to-purple-700 text-white shadow-md 
+             hover:shadow-lg transition-all duration-200 
+             disabled:opacity-50 disabled:cursor-not-allowed"
+  title="Enhance with AI"
+>
+  {loadingDesc ? (
+    <Loader2 className="w-4 h-4 animate-spin" />
+  ) : (
+    <Wand2 className="w-4 h-4" />
+  )}
+</Button>
+
+
+    
+  </div>
+</div>
+
+            {/* Category, Status, Date */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Category */}
               <div className="space-y-2">
@@ -147,6 +245,7 @@ console.log("Creating new goal with ID:",id);
                 <DateField<NewGoal> name="endDate" control={control} />
               </div>
             </div>
+
             {/* ACTION BUTTONS */}
             <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100">
               <Button

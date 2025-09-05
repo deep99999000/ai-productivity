@@ -1,16 +1,13 @@
 "use client";
 import type { Goal } from "@/features/goals/goalSchema";
-import { useDialog } from "@/hooks/usedialog";
 import { useGoal } from "@/features/goals/GoalStore";
 import { useEffect } from "react";
-import NewGoalDialog from "@/features/goals/components/NewGoal";
-import GoalEmptyState from "@/features/goals/components/GoalEmptyState";
-import GoalHeader from "@/features/goals/components/GoalHeader";
-import GoalQuickStats from "@/features/goals/components/GoalQuickStats";
-import GoalGrid from "@/features/goals/components/GoalGrid";
+import GoalEmptyState from "@/features/goals/components/goal/GoalEmptyState";
+import GoalHeader from "@/features/goals/components/goal/GoalHeader";
+import GoalQuickStats from "@/features/goals/components/goal/GoalQuickStats";
+import GoalGrid from "@/features/goals/components/goal/GoalGrid";
 
 const AllGoals = ({ goals }: { goals: Goal[] }) => {
-  const { open, isOpen, close } = useDialog();
   const { allGoals, setGoal } = useGoal();
 
   useEffect(() => {
@@ -47,8 +44,6 @@ const AllGoals = ({ goals }: { goals: Goal[] }) => {
             <GoalGrid goals={allGoals} />
           </div>
         )}
-
-        <NewGoalDialog isOpen={isOpen} setIsOpen={close} />
       </div>
     </div>
   );

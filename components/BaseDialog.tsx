@@ -1,3 +1,4 @@
+// components/BaseDialog.tsx
 "use client";
 
 import * as React from "react";
@@ -15,6 +16,7 @@ interface BaseDialogProps {
   title: string;
   description?: string;
   children: React.ReactNode;
+  contentClassName?: string; // <-- Added prop
 }
 
 const BaseDialog: React.FC<BaseDialogProps> = ({
@@ -23,10 +25,11 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   title,
   description,
   children,
+  contentClassName,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={setisOpen}>
-      <DialogContent>
+      <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && (

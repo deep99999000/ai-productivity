@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 
 interface ShowDateProps {
-  date: Date;
+  date: Date | string;
 }
 
 export const ShowDate: React.FC<ShowDateProps> = ({ date }) => {

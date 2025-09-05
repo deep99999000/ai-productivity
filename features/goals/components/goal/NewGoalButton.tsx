@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import NewGoalDialog from "@/features/goals/components/NewGoal";
+import NewGoalDialog from "@/features/goals/components/goal/NewGoal";
 import { useDialog } from "@/hooks/usedialog";
 import { Plus } from "lucide-react";
 import React from "react";

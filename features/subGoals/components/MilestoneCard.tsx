@@ -4,9 +4,21 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Flag, Edit, Trash2, CheckCircle, Circle } from "lucide-react";
-import { statusConfig, StatusType } from "@/features/subGoals/components/StatusConfig";
+import {
+  ChevronRight,
+  Flag,
+  Edit,
+  Trash2,
+  CheckCircle,
+  Circle,
+} from "lucide-react";
+import {
+  statusConfig,
+  StatusType,
+} from "@/features/subGoals/components/StatusConfig";
 import { useTodo } from "@/features/todo/todostore";
+import { useGoal } from "@/features/goals/GoalStore";
+import { useSubgoal } from "@/features/subGoals/subgoalStore";
 
 interface MilestoneCardProps {
   id: number;
@@ -27,6 +39,7 @@ export function MilestoneCard({
 }: MilestoneCardProps) {
   const router = useRouter();
   const { todos } = useTodo();
+  const { deleteSubgoal, toggleSubgoal } = useSubgoal();
 
   // ✅ Filter todos for this subgoal
   const subgoalTodos = todos.filter((todo) => todo.subgoal_id === id);
@@ -45,19 +58,13 @@ export function MilestoneCard({
   const href = `${hrefBase}/${id}`;
 
   // Toggle completion (placeholder)
-  const handleToggleComplete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // your toggle complete logic here
+  const handleToggleComplete = () => {
+    toggleSubgoal(id);
   };
 
   // Delete subgoal (placeholder)
-  const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (confirm("Are you sure you want to delete this milestone?")) {
-      // your delete logic here
-    }
+  const handleDelete = () => {
+    deleteSubgoal(id);
   };
 
   // Navigate to edit page
@@ -82,23 +89,6 @@ export function MilestoneCard({
     >
       {/* Hover Action Buttons (no nested <a> anymore) */}
       <div className="absolute -top-2 -right-2 flex opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 z-10">
-        <button
-          onClick={handleToggleComplete}
-          className={cn(
-            "p-1.5 rounded-full text-xs border shadow-sm bg-white hover:bg-slate-50",
-            "text-slate-600 hover:text-green-600 border-slate-300 hover:border-green-400"
-          )}
-          aria-label={
-            calculatedStatus === "Completed" ? "Mark as incomplete" : "Mark as complete"
-          }
-        >
-          {calculatedStatus === "Completed" ? (
-            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-          ) : (
-            <Circle className="w-3.5 h-3.5" />
-          )}
-        </button>
-
         <button
           onClick={handleEdit}
           className="p-1.5 ml-1 rounded-full text-xs border shadow-sm bg-white hover:bg-blue-50 text-slate-600 hover:text-blue-600 border-slate-300 hover:border-blue-400"
@@ -129,9 +119,13 @@ export function MilestoneCard({
                 {title}
               </h3>
               {description ? (
-                <p className="text-sm text-slate-600 mt-1 line-clamp-2">{description}</p>
+                <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                  {description}
+                </p>
               ) : (
-                <p className="text-sm text-slate-400 mt-1 italic">No description</p>
+                <p className="text-sm text-slate-400 mt-1 italic">
+                  No description
+                </p>
               )}
             </div>
           </div>
