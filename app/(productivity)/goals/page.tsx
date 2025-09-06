@@ -24,7 +24,17 @@ export default function GoalPage() {
   }, [allGoals.length, setGoal]);
 
   if (loading) return <Loading message="Loading your goals..." />;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="px-4 py-2 bg-red-50 text-red-700 rounded-md border border-red-200">{error}</p>
+    </div>
+  );
 
-  return <AllGoals goals={allGoals} />;
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="container mx-auto px-6 md:px-8 py-6 md:py-8 max-w-7xl">
+        <AllGoals goals={allGoals} />
+      </div>
+    </div>
+  );
 }

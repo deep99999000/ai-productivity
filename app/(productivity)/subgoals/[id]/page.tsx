@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import React, { useEffect } from "react";
+import { motion } from "motion/react";
 
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
 import { useTodo } from "@/features/todo/todostore";
@@ -13,6 +14,13 @@ import SubgoalStats from "@/features/subGoals/components/SubgoalStats";
 import SubgoalTasks from "@/features/subGoals/components/SubgoalTasks";
 
 const Page = () => {
+  // Smooth fade for sections
+  const fadeIn = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+  };
+
   const { id } = useParams();
   const { subgoals, updateSubgoalStatus } = useSubgoal();
   const { todos } = useTodo();
@@ -54,10 +62,10 @@ const Page = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="container mx-auto px-6 md:px-8 py-6 md:py-8 max-w-5xl space-y-6">
         {/* Back button */}
-        <div className="mb-8">
+        <motion.div {...fadeIn}>
           <Link
             href={`/goals/${subgoal.goal_id}`}
             className="inline-flex items-center text-slate-600 hover:text-slate-900 group transition-colors"
@@ -67,21 +75,27 @@ const Page = () => {
             </div>
             <span className="font-medium">Back to Goal</span>
           </Link>
-        </div>
+        </motion.div>
 
         {/* Header */}
-        <SubgoalHeader subgoal={subgoal} />
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }}>
+          <SubgoalHeader subgoal={subgoal} />
+        </motion.div>
 
         {/* Stats */}
-        <SubgoalStats
-          subgoal={subgoal}
-          computedStatus={computedStatus}
-          completionPercentage={completionPercentage}
-          tasks={tasks}
-        />
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }}>
+          <SubgoalStats
+            subgoal={subgoal}
+            computedStatus={computedStatus}
+            completionPercentage={completionPercentage}
+            tasks={tasks}
+          />
+        </motion.div>
 
         {/* Tasks */}
-        <SubgoalTasks tasks={tasks} subgoalId={Number(id)} />
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.15 }}>
+          <SubgoalTasks tasks={tasks} subgoalId={Number(id)} />
+        </motion.div>
       </div>
     </div>
   );

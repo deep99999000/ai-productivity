@@ -2,20 +2,15 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import type { ApexOptions } from "apexcharts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { ListTodo, CheckCircle2, Target, Flame, BookText, Brain } from "lucide-react";
 import { useTodo } from "@/features/todo/todostore";
 import { useGoal } from "@/features/goals/GoalStore";
+import type { Todo } from "@/features/todo/todoSchema";
+import type { Goal } from "@/features/goals/goalSchema";
 
 // Extracted dashboard components
 import StatCard from "@/features/dashboard/components/StatCard";
@@ -30,6 +25,10 @@ import FocusTimer from "@/features/dashboard/components/FocusTimer";
 import JournalInsights from "@/features/dashboard/components/JournalInsights";
 import JournalList from "@/features/dashboard/components/JournalList";
 import QuickActionsBar from "@/features/dashboard/components/QuickActionsBar";
+
+// Local series types (avoid depending on apexcharts series typings)
+type AxisSeries = { name: string; data: number[] }[];
+type NonAxisSeries = number[];
 
 // ---- Helper Data ----
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -55,10 +54,11 @@ export default function DashboardPage() {
   const { todos } = useTodo();
   const { allGoals } = useGoal();
 
-  const totalTodos = todos?.length ?? 0;
-  const completedTodos = todos?.filter((t: any) => t.isDone)?.length ?? 0;
-  const progressPct = totalTodos ? Math.round((completedTodos / totalTodos) * 100) : 0;
-  const activeGoals = allGoals?.filter((g: any) => g.status !== "Completed")?.length ?? 0;
+  const totalTodos = Array.isArray(todos) ? (todos as Todo[]).length : 0;
+  const completedTodos = Array.isArray(todos) ? (todos as Todo[]).filter((t) => t.isDone).length : 0;
+  const activeGoals = Array.isArray(allGoals)
+    ? (allGoals as Goal[]).filter((g) => g.status !== "Completed").length
+    : 0;
 
   // Ensure AI Tip rotator state exists
   const [tipIndex, setTipIndex] = useState(0);
@@ -107,15 +107,13 @@ export default function DashboardPage() {
   const toggleHabit = (id: string) => setHabits((hs) => hs.map((h) => (h.id === id ? { ...h, done: !h.done } : h)));
 
   // Add simple week-wise habit completion state (Mon..Sun)
-  const [habitWeek, setHabitWeek] = useState<Record<string, boolean[]>>({
+  const [habitWeek] = useState<Record<string, boolean[]>>({
     water: [true, false, true, true, false, false, true],
     workout: [false, false, true, false, true, false, false],
     read: [true, true, true, true, false, true, false],
     meditate: [false, true, false, true, false, true, false],
     sleep: [false, false, false, true, true, false, true],
   });
-  const toggleHabitDay = (hid: string, dayIdx: number) =>
-    setHabitWeek((w) => ({ ...w, [hid]: (w[hid] || Array(7).fill(false)).map((v, i) => (i === dayIdx ? !v : v)) }));
 
   // ---- Charts config ----
   const baseAnimation = { animations: { enabled: true, easing: "easeinout", speed: 600 } } as ApexOptions;
@@ -155,7 +153,7 @@ export default function DashboardPage() {
     tooltip: { theme: "light" },
     ...baseAnimation,
   };
-  const weeklyTasksSeries = [
+  const weeklyTasksSeries: AxisSeries = [
     { name: "Created", data: [6, 4, 7, 5, 6, 3, 4] },
     { name: "Completed", data: [3, 2, 5, 4, 5, 2, 3] },
   ];
@@ -171,12 +169,12 @@ export default function DashboardPage() {
     fill: { type: "gradient", gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
     ...baseAnimation,
   };
-  const moodSeries = [{ name: "Mood", data: moodHistory.map((m) => m.mood) }];
+  const moodSeries: AxisSeries = [{ name: "Mood", data: moodHistory.map((m) => m.mood) }];
 
   // Time tracking datasets
-  const timeSeries = [6, 2, 7, 3]; // daily example hours
-  const timeWeeklySeries = [30, 10, 40, 20];
-  const timeMonthlySeries = [120, 40, 160, 60];
+  const timeSeries: NonAxisSeries = [6, 2, 7, 3]; // daily example hours
+  const timeWeeklySeries: NonAxisSeries = [30, 10, 40, 20];
+  const timeMonthlySeries: NonAxisSeries = [120, 40, 160, 60];
 
   const timeOptions: ApexOptions = {
     ...apexTheme,
@@ -186,7 +184,7 @@ export default function DashboardPage() {
     grid: { padding: { top: 8, bottom: 8, left: 8, right: 8 } },
     legend: {
       position: "bottom",
-      formatter: (seriesName: string, opts?: any) => {
+      formatter: (seriesName: string, opts?: { seriesIndex: number; w?: { globals?: { series?: number[] } } }) => {
         const val = opts?.w?.globals?.series?.[opts.seriesIndex] ?? 0;
         return `${seriesName} — ${formatHM(val)}`;
       },
@@ -194,7 +192,7 @@ export default function DashboardPage() {
     },
     dataLabels: {
       enabled: true,
-      formatter: (_val: number, opts?: any) => {
+      formatter: (_val: number, opts?: { seriesIndex: number; w?: { globals?: { labels?: string[] } } }) => {
         const label = opts?.w?.globals?.labels?.[opts.seriesIndex] ?? "";
         return String(label);
       },
@@ -218,7 +216,7 @@ export default function DashboardPage() {
               fontSize: "14px",
               fontWeight: 600,
               color: "#0f172a",
-              formatter: (w: any) => {
+              formatter: (w: { globals?: { seriesTotals?: number[] } }) => {
                 const sum = (w?.globals?.seriesTotals || []).reduce((a: number, b: number) => a + b, 0);
                 return formatHM(sum);
               },
@@ -243,7 +241,7 @@ export default function DashboardPage() {
       return 30;
     };
     const palette = ["#2563eb", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
-    return (allGoals || []).slice(0, 3).map((g: any, idx: number) => ({
+    return ((allGoals as Goal[]) || []).slice(0, 3).map((g: Goal, idx: number) => ({
       name: g?.name || `Goal ${idx + 1}`,
       value: toProgress(g?.status),
       color: palette[idx % palette.length],
@@ -266,102 +264,23 @@ export default function DashboardPage() {
     ...baseAnimation,
   };
 
-  // Habit Heatmap (weekly check-ins)
-  const habitHeatmapOptions: ApexOptions = {
-    chart: { type: "heatmap", toolbar: { show: false } },
-    dataLabels: { enabled: false },
-    grid: { strokeDashArray: 4 },
-    plotOptions: {
-      heatmap: {
-        radius: 4,
-        shadeIntensity: 0.3,
-        colorScale: {
-          ranges: [
-            { from: 0, to: 0, color: "#e2e8f0", name: "0" },
-            { from: 1, to: 1, color: "#93c5fd", name: "1" },
-            { from: 2, to: 2, color: "#60a5fa", name: "2" },
-            { from: 3, to: 3, color: "#3b82f6", name: "3" },
-            { from: 4, to: 7, color: "#2563eb", name: "4+" },
-          ],
-        },
-      },
-    },
-    xaxis: { labels: { style: { colors: "#64748b" } } },
-    yaxis: { labels: { style: { colors: "#64748b" } } },
-    tooltip: { theme: "light" },
-    ...baseAnimation,
-  };
-
-  // Generate a simple 4-week heatmap for the 7 days
-  const habitHeatmapSeries = useMemo(
-    () => {
-      const weeks = ["W1", "W2", "W3", "W4"];
-      // Example: counts of completed habits each day per week (0-5)
-      const sample: number[][] = [
-        [1, 2, 3, 2], // Mon
-        [0, 1, 2, 3], // Tue
-        [2, 3, 1, 2], // Wed
-        [1, 2, 2, 3], // Thu
-        [3, 4, 2, 4], // Fri
-        [2, 1, 0, 2], // Sat
-        [1, 2, 1, 2], // Sun
-      ];
-      return weekDays.map((day, idx) => ({
-        name: day,
-        data: weeks.map((w, j) => ({ x: w, y: sample[idx]?.[j] ?? 0 })),
-      }));
-    },
-    []
-  );
-
-  // --- Projects Select + milestone chart ---
-  const projects = useMemo(
-    () => [
-      { id: "portfolio", name: "Personal Website", progress: 72, milestones: [10, 35, 55, 72], color: "#2563eb" },
-      { id: "fitness", name: "Fitness Plan", progress: 45, milestones: [5, 18, 33, 45], color: "#10b981" },
-      { id: "rust", name: "Learning Rust", progress: 28, milestones: [3, 10, 22, 28], color: "#f59e0b" },
-    ],
-    []
-  );
-  const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id || "portfolio");
-  const selectedProject = useMemo(
-    () => projects.find((p) => p.id === selectedProjectId) || projects[0],
-    [projects, selectedProjectId]
-  );
-  const milestoneOptions: ApexOptions = useMemo(
-    () => ({
-      chart: { type: "line", toolbar: { show: false } },
-      stroke: { curve: "smooth", width: 3 },
-      dataLabels: { enabled: false },
-      grid: { strokeDashArray: 4 },
-      colors: [selectedProject?.color || "#2563eb"],
-      xaxis: { categories: ["M1", "M2", "M3", "Now"] },
-      ...baseAnimation,
-    }),
-    [selectedProject]
-  );
-  const milestoneSeries = useMemo(
-    () => [{ name: selectedProject?.name || "Progress", data: selectedProject?.milestones || [] }],
-    [selectedProject]
-  );
-
   // Compute "today" todos first
   const isSameDay = (d1: Date, d2: Date) =>
     d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
-  const parsePossibleDate = (val: any): Date | null => {
+  const parsePossibleDate = (val: unknown): Date | null => {
     if (!val) return null;
-    try {
+    if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+    if (typeof val === "string" || typeof val === "number") {
       const d = new Date(val);
       return isNaN(d.getTime()) ? null : d;
-    } catch {
-      return null;
     }
+    return null;
   };
-  const today = new Date();
   const todaysTodos = useMemo(() => {
-    const list = (todos || []).filter((t: any) => !t?.isDone);
-    const todayList = list.filter((t: any) => {
-      const due = parsePossibleDate(t?.dueDate || t?.due || t?.deadline || t?.date);
+    const list = ((todos as Todo[]) || []).filter((t) => !t.isDone);
+    const today = new Date();
+    const todayList = list.filter((t) => {
+      const due = parsePossibleDate(t.endDate ?? t.startDate ?? null);
       return due ? isSameDay(due, today) : false;
     });
     // If nothing explicitly due today, show top 5 open
@@ -373,8 +292,10 @@ export default function DashboardPage() {
   const fadeIn = {
     initial: { opacity: 0, y: 12 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as any },
+    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
   };
+
+  const progressPct = totalTodos ? Math.round((completedTodos / totalTodos) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
@@ -449,18 +370,18 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {/* Mood Tracking */}
               <motion.div {...fadeIn}>
-                <MoodTracker moodHistory={moodHistory} addMood={addMood} options={moodOptions} series={moodSeries as any} />
+                <MoodTracker moodHistory={moodHistory} addMood={addMood} options={moodOptions} series={moodSeries} />
               </motion.div>
 
               {/* Time Tracking */}
               <motion.div {...fadeIn}>
-                <TimeTracking options={timeOptions} daily={timeSeries} weekly={timeWeeklySeries} monthly={timeMonthlySeries} />
+                <TimeTracking options={timeOptions} daily={timeSeries as number[]} weekly={timeWeeklySeries as number[]} monthly={timeMonthlySeries as number[]} />
               </motion.div>
             </div>
 
             {/* Productivity Trend (reintroduced, compact) */}
             <motion.div {...fadeIn}>
-              <ProductivityTrend options={weeklyTasksOptions} series={weeklyTasksSeries as any} />
+              <ProductivityTrend options={weeklyTasksOptions} series={weeklyTasksSeries} />
             </motion.div>
 
             {/* Habit Week (now view-only with emojis) */}

@@ -1,9 +1,7 @@
-import React from 'react'
+"use client";
+import React from "react";
+import HabitsDashboard from "@/features/habits/components/HabitsDashboard";
 
-const page = () => {
-  return (
-    <div className='h-screen flex justify-center item-center text-7xl'>Coming Soon......</div>
-  )
+export default function HabitsPage() {
+  return <HabitsDashboard />;
 }
-
-export default page

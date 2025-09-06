@@ -14,7 +14,6 @@ const AllGoals = ({ goals }: { goals: Goal[] }) => {
     if (goals && goals.length > 0) {
       setGoal(goals);
     }
-    totalGoals;
   }, [goals, setGoal]);
 
   const completedGoals = allGoals.filter(
@@ -23,28 +22,25 @@ const AllGoals = ({ goals }: { goals: Goal[] }) => {
   const totalGoals = allGoals.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header Section */}
-        <GoalHeader />
+    <div className="space-y-6">
+      {/* Header Section */}
+      <GoalHeader />
 
-        {/* Main Content Area */}
-        {allGoals.length === 0 ? (
-          //  Empty State
-          <GoalEmptyState />
-        ) : (
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <GoalQuickStats
-              totalGoals={totalGoals}
-              completedGoals={completedGoals}
-            />
+      {/* Main Content Area */}
+      {allGoals.length === 0 ? (
+        <GoalEmptyState />
+      ) : (
+        <div className="space-y-6">
+          {/* Quick Stats */}
+          <GoalQuickStats
+            totalGoals={totalGoals}
+            completedGoals={completedGoals}
+          />
 
-            {/* Goals Grid */}
-            <GoalGrid goals={allGoals} />
-          </div>
-        )}
-      </div>
+          {/* Goals Grid */}
+          <GoalGrid goals={allGoals} />
+        </div>
+      )}
     </div>
   );
 };
