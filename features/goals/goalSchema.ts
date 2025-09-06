@@ -6,8 +6,6 @@ import {
   bigint,
 } from "drizzle-orm/pg-core";
 import { usersTable } from "@/db/schema";
-import { useSubgoal } from "@/features/subGoals/subgoalStore";
-import { progress } from "motion/react";
 
 
 export const goalTable = pgTable("goaltable", {
@@ -21,8 +19,8 @@ export const goalTable = pgTable("goaltable", {
     .references(() => usersTable.id),
   status: varchar("status").default("Not Started").notNull(),
   category: varchar("category", { length: 100 }),
-  endDate:timestamp(),
+  endDate: timestamp(),
 });
 
 export type Goal = typeof goalTable.$inferSelect;
-export type NewGoal = typeof goalTable.$inferInsert;  
+export type NewGoal = typeof goalTable.$inferInsert;

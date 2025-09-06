@@ -20,6 +20,7 @@ import {
   BarChart3,
   User,
 } from "lucide-react";
+import { motion } from "motion/react";
 
 const navItems = [
   { label: "Dashboard", icon: Home, href: "/dashboard" },
@@ -42,11 +43,14 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-slate-50">
       {/* Sidebar */}
-      <aside
+      <motion.aside
+        initial={false}
+        animate={{ width: collapsed ? 80 : 288 }}
+        transition={{ type: "spring", stiffness: 260, damping: 28 }}
         className={cn(
-          "flex flex-col bg-white border-r border-slate-200 transition-all duration-300 ease-in-out shadow-sm",
-          collapsed ? "w-20 min-w-[5rem]" : "w-72 min-w-[18rem]"
+          "flex flex-col bg-white border-r border-slate-200 shadow-sm overflow-hidden"
         )}
+        style={{ width: collapsed ? 80 : 288 }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
@@ -71,6 +75,7 @@ export default function DashboardLayout({
             variant="ghost"
             className="h-9 w-9 hover:bg-slate-100 rounded-full ml-auto"
             onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
               <ChevronRight className="w-5 h-5" />
@@ -153,7 +158,7 @@ export default function DashboardLayout({
             )}
           </Link>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6">
