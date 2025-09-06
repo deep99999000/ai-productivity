@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import type { ApexOptions } from "apexcharts";
 import {
   Card,
@@ -10,43 +9,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { motion } from "motion/react";
-import {
-  TrendingUp,
-  ListTodo,
-  CheckCircle2,
-  Target,
-  Flame,
-  BookText,
-  Brain,
-  Timer as TimerIcon,
-  CalendarDays,
-  Play,
-  Pause,
-  Square,
-  Smile,
-  Meh,
-  Frown,
-  Plus,
-  NotebookPen,
-  AlarmClock,
-  FolderKanban,
-  Circle,
-} from "lucide-react";
+import { ListTodo, CheckCircle2, Target, Flame, BookText, Brain } from "lucide-react";
 import { useTodo } from "@/features/todo/todostore";
 import { useGoal } from "@/features/goals/GoalStore";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 
-// React ApexCharts must be loaded client-side
-const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
+// Extracted dashboard components
+import StatCard from "@/features/dashboard/components/StatCard";
+import MoodTracker from "@/features/dashboard/components/MoodTracker";
+import TimeTracking from "@/features/dashboard/components/TimeTracking";
+import ProductivityTrend from "@/features/dashboard/components/ProductivityTrend";
+import HabitWeek from "@/features/dashboard/components/HabitWeek";
+import GoalRadials from "@/features/dashboard/components/GoalRadials";
+import NextTaskCard from "@/features/dashboard/components/NextTaskCard";
+import HabitsToday from "@/features/dashboard/components/HabitsToday";
+import FocusTimer from "@/features/dashboard/components/FocusTimer";
+import JournalInsights from "@/features/dashboard/components/JournalInsights";
+import JournalList from "@/features/dashboard/components/JournalList";
+import QuickActionsBar from "@/features/dashboard/components/QuickActionsBar";
 
 // ---- Helper Data ----
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -67,32 +50,6 @@ const habitEmoji: Record<string, string> = {
   meditate: "🧘",
   sleep: "😴",
 };
-
-function StatCard({
-  title,
-  value,
-  icon: Icon,
-  accent = "from-blue-50 to-indigo-50",
-}: {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  accent?: string;
-}) {
-  return (
-    <Card className="border-slate-200/70 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-slate-50 gap-4 py-5">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-        <CardTitle className="text-sm font-medium text-slate-600">{title}</CardTitle>
-        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br", accent)}>
-          <Icon className="w-5 h-5 text-blue-600" />
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="text-2xl font-bold text-slate-900">{value}</div>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function DashboardPage() {
   const { todos } = useTodo();
@@ -492,160 +449,28 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {/* Mood Tracking */}
               <motion.div {...fadeIn}>
-                <Card className="gap-4">
-                  <CardHeader className="pb-0">
-                    <CardTitle className="flex items-center gap-2"><Smile className="w-5 h-5" /> Mood Tracking</CardTitle>
-                    <CardDescription>Daily sentiment</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-2">
-                        <TooltipProvider>
-                          {[
-                            { v: 1, label: "Very Low", emoji: "😞" },
-                            { v: 2, label: "Low", emoji: "🙁" },
-                            { v: 3, label: "Neutral", emoji: "😐" },
-                            { v: 4, label: "Good", emoji: "🙂" },
-                            { v: 5, label: "Great", emoji: "😄" },
-                          ].map((m) => (
-                            <Tooltip key={m.v}>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="rounded-full w-10 h-10"
-                                  onClick={() => addMood(m.v)}
-                                  aria-label={`Log mood ${m.label}`}
-                                >
-                                  <span className="text-lg leading-none">{m.emoji}</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>{m.label}</TooltipContent>
-                            </Tooltip>
-                          ))}
-                        </TooltipProvider>
-                      </div>
-                      <ReactApexChart options={moodOptions} series={moodSeries as any} type="area" height={220} />
-                    </div>
-                  </CardContent>
-                </Card>
+                <MoodTracker moodHistory={moodHistory} addMood={addMood} options={moodOptions} series={moodSeries as any} />
               </motion.div>
 
               {/* Time Tracking */}
               <motion.div {...fadeIn}>
-                <Card className="gap-4">
-                  <CardHeader className="pb-0">
-                    <CardTitle className="flex items-center gap-2"><CalendarDays className="w-5 h-5" /> Time Tracking</CardTitle>
-                    <CardDescription>Daily / Weekly</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <Tabs defaultValue="daily">
-                      <TabsList className="mb-3">
-                        <TabsTrigger value="daily">Daily</TabsTrigger>
-                        <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                        <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="daily" className="m-0  text-black">
-                        <div className="overflow-visible">
-                          <ReactApexChart options={timeOptions} series={timeSeries as any} type="donut" height={260} />
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="weekly" className="m-0">
-                        <div className="overflow-visible">
-                          <ReactApexChart options={timeOptions} series={timeWeeklySeries as any} type="donut" height={260} />
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="monthly" className="m-0">
-                        <div className="overflow-visible">
-                          <ReactApexChart options={timeOptions} series={timeMonthlySeries as any} type="donut" height={260} />
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </CardContent>
-                </Card>
+                <TimeTracking options={timeOptions} daily={timeSeries} weekly={timeWeeklySeries} monthly={timeMonthlySeries} />
               </motion.div>
             </div>
 
             {/* Productivity Trend (reintroduced, compact) */}
             <motion.div {...fadeIn}>
-              <Card className="gap-4">
-                <CardHeader className="pb-0">
-                  <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Productivity Trend</CardTitle>
-                  <CardDescription>Tasks created vs completed</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <ReactApexChart options={weeklyTasksOptions} series={weeklyTasksSeries as any} type="area" height={220} />
-                </CardContent>
-              </Card>
+              <ProductivityTrend options={weeklyTasksOptions} series={weeklyTasksSeries as any} />
             </motion.div>
 
             {/* Habit Week (now view-only with emojis) */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-              <Card className="gap-4">
-                <CardHeader className="pb-0">
-                  <CardTitle className="flex items-center gap-2"><Flame className="w-5 h-5" /> Habit Tracker (Week)</CardTitle>
-                  <CardDescription>Weekly check-ins (view only)</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0 overflow-x-auto">
-                  <div className="min-w-[520px]">
-                    <div className="grid" style={{ gridTemplateColumns: `160px repeat(7, minmax(0, 1fr))` }}>
-                      <div className="text-xs text-slate-500" />
-                      {weekDays.map((d) => (
-                        <div key={d} className="text-xs text-slate-500 text-center py-2">{d}</div>
-                      ))}
-                      {habits.map((h: { id: string; name: string; done: boolean }) => (
-                        <React.Fragment key={h.id}>
-                          <div className="py-2 pr-2 text-sm font-medium text-slate-700 truncate flex items-center gap-2">
-                            <span className="text-base leading-none">{habitEmoji[h.id] || "•"}</span>
-                            <span>{h.name}</span>
-                          </div>
-                          {weekDays.map((d: string, idx: number) => {
-                            const on = habitWeek[h.id]?.[idx] ?? false;
-                            return (
-                              <div
-                                key={idx}
-                                className={cn(
-                                  "h-9 m-1 rounded-md border flex items-center justify-center select-none",
-                                  on ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-white"
-                                )}
-                                aria-label={`${h.name} ${weekDays[idx]} ${on ? "done" : "not done"}`}
-                                aria-disabled
-                              >
-                                {on ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Circle className="w-4 h-4 text-slate-400" />}
-                              </div>
-                            );
-                          })}
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <HabitWeek weekDays={weekDays} habits={habits} habitEmoji={habitEmoji} habitWeek={habitWeek} />
             </motion.div>
 
             {/* Goal Progress moved to bottom */}
             <motion.div {...fadeIn}>
-              <Card className="gap-4">
-                <CardHeader className="pb-0">
-                  <CardTitle className="flex items-center gap-2"><Target className="w-5 h-5" /> Goal Progress</CardTitle>
-                  <CardDescription>Keep momentum on what matters</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-3 gap-3">
-                    {goalRadials.map((g) => (
-                      <div key={g.name} className="text-center">
-                        <ReactApexChart
-                          options={{ ...radialBase, colors: [g.color] }}
-                          series={[g.value] as any}
-                          type="radialBar"
-                          height={140}
-                        />
-                        <p className="text-xs text-slate-600 truncate">{g.name}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <GoalRadials radials={goalRadials} radialBase={radialBase} />
             </motion.div>
           </div>
 
@@ -653,159 +478,44 @@ export default function DashboardPage() {
           <div className="space-y-5">
             {/* Next Task FIRST */}
             <motion.div {...fadeIn}>
-              <Card className="gap-4">
-                <CardHeader className="pb-0">
-                  <CardTitle>Next Task</CardTitle>
-                  <CardDescription>Priority for today</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {nextTask ? (
-                    <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
-                      <p className="font-medium text-slate-900">{nextTask.name}</p>
-                      {nextTask.description && (
-                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">{nextTask.description}</p>
-                      )}
-                      <div className="flex items-center gap-2 mt-3">
-                        {nextTask.priority && (
-                          <Badge variant="outline" className="text-xs capitalize">{nextTask.priority}</Badge>
-                        )}
-                        {nextTask.category && (
-                          <Badge className="bg-slate-100 text-slate-700" variant="secondary">{nextTask.category}</Badge>
-                        )}
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <Link href="/todos"><Button size="sm">Open Tasks</Button></Link>
-                        <Button size="sm" variant="secondary" onClick={() => setRunning(true)} className="gap-1"><AlarmClock className="w-4 h-4"/> Focus</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-slate-500">All clear. Plan your next move.</p>
-                  )}
-                </CardContent>
-              </Card>
+              <NextTaskCard nextTask={nextTask} onFocus={() => setRunning(true)} />
             </motion.div>
 
             {/* Habits Today */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-              <Card className="gap-4">
-                <CardHeader className="pb-0">
-                  <CardTitle className="flex items-center gap-2"><Flame className="w-5 h-5" /> Habits Today</CardTitle>
-                  <CardDescription>Tap to mark done</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <ul className="space-y-3">
-                    {habits.map((h) => (
-                      <li key={h.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => toggleHabit(h.id)}
-                            className="p-1.5 rounded-full border border-slate-200 hover:bg-slate-50"
-                            aria-label={`Toggle ${h.name}`}
-                          >
-                            {h.done ? (
-                              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                            ) : (
-                              <Circle className="w-5 h-5 text-slate-400" />
-                            )}
-                          </button>
-                          <p className={cn("text-sm font-medium", h.done ? "text-slate-500 line-through" : "text-slate-800")}>{h.name}</p>
-                        </div>
-                        {h.done && <Badge className="bg-emerald-100 text-emerald-700" variant="secondary">Done</Badge>}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              <HabitsToday habits={habits} toggleHabit={toggleHabit} />
             </motion.div>
 
             {/* Focus Timer */}
             <motion.div {...fadeIn}>
-              <Card className="gap-4">
-                <CardHeader className="pb-0">
-                  <CardTitle className="flex items-center gap-2"><TimerIcon className="w-5 h-5" /> Focus Timer</CardTitle>
-                  <CardDescription>Pomodoro style sessions</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex items-center justify-center">
-                    <div className="text-5xl font-mono tabular-nums tracking-wider text-slate-900">{mm}:{ss}</div>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 mt-4">
-                    {!running ? (
-                      <Button onClick={() => setRunning(true)} className="gap-2">
-                        <Play className="w-4 h-4" /> Start
-                      </Button>
-                    ) : (
-                      <Button variant="secondary" onClick={() => setRunning(false)} className="gap-2">
-                        <Pause className="w-4 h-4" /> Pause
-                      </Button>
-                    )}
-                    <Button variant="outline" onClick={() => { setRunning(false); setSecondsLeft(DEFAULT_SECONDS); }} className="gap-2">
-                      <Square className="w-4 h-4" /> Reset
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <FocusTimer
+                mm={mm}
+                ss={ss}
+                running={running}
+                onStart={() => setRunning(true)}
+                onPause={() => setRunning(false)}
+                onReset={() => {
+                  setRunning(false);
+                  setSecondsLeft(DEFAULT_SECONDS);
+                }}
+              />
             </motion.div>
 
             {/* Journal Insights */}
             <motion.div {...fadeIn}>
-              <Card id="journal" className="gap-4">
-                <CardHeader className="pb-0">
-                  <CardTitle>Journal Insights</CardTitle>
-                  <CardDescription>Today’s reflection summary</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-700">Mood: Positive</Badge>
-                    <p className="text-sm text-slate-700">
-                      Focused deep work in the morning, energy dipped after lunch. Quick walk restored clarity. Key win: shipped feature MVP.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <JournalInsights />
             </motion.div>
-
-            {/* Remove Upcoming Goals & Deadlines */}
 
             {/* Last 5 Journal Entries */}
             <motion.div {...fadeIn}>
-              <Card className="gap-4">
-                <CardHeader className="pb-0">
-                  <CardTitle>Last 5 Journal Entries</CardTitle>
-                  <CardDescription>Compact preview</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <ul className="space-y-3">
-                    {[1,2,3,4,5].map((i) => (
-                      <li key={i} className="flex items-start justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-slate-800">Reflection #{i}</p>
-                          <p className="text-xs text-slate-500 line-clamp-1">Noted key learnings and a quick gratitude line.</p>
-                        </div>
-                        <Badge className="bg-emerald-100 text-emerald-700" variant="secondary">Calm</Badge>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              <JournalList />
             </motion.div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions Bar */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <div className="backdrop-blur bg-white/80 border border-slate-200 shadow-lg rounded-full px-3 py-2 flex items-center gap-2">
-          <Link href="/todos">
-            <Button size="sm" className="rounded-full"><Plus className="w-4 h-4"/> New Task</Button>
-          </Link>
-          <Link href="/dashboard#journal">
-            <Button size="sm" variant="secondary" className="rounded-full"><NotebookPen className="w-4 h-4"/> New Journal</Button>
-          </Link>
-          <Button size="sm" variant="outline" className="rounded-full" onClick={() => setRunning(true)}><TimerIcon className="w-4 h-4"/> Start Focus</Button>
-          <Button size="sm" variant="ghost" className="rounded-full" onClick={() => addMood(4)}><Smile className="w-4 h-4"/> Log Mood</Button>
-        </div>
-      </div>
+      <QuickActionsBar onStartFocus={() => setRunning(true)} onLogMood={() => addMood(4)} />
     </div>
   );
 }
