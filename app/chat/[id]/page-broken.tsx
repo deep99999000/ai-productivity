@@ -5,7 +5,7 @@ import { use } from "react";
 import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, MessageCircle, Bell, BellOff } from "lucide-react";
+import { Send, MessageCircle, Bell, BellOff, Phone, Video, Camera, Smile, Heart } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 
 interface Message {
@@ -16,6 +16,15 @@ interface Message {
   createdAt: string;
 }
 
+interface MessagePayload {
+  message?: Message;
+  id?: string;
+  roomId?: string;
+  sender?: string;
+  text?: string;
+  createdAt?: string;
+}
+
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -24,7 +33,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [isConnected, setIsConnected] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
-  const [quickReply, setQuickReply] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const resolvedParams = use(params);
   const roomId = resolvedParams.id;
@@ -78,7 +86,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       } else if (permission === "denied") {
         toast.error("Notifications blocked. Enable in browser settings.");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Notification permission error:", err);
       toast.error("Failed to request notification permission");
     }
   };
@@ -239,8 +248,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setIsConnected(false);
     });
 
-    socketIO.on("new-message", (payload: any) => {
-      const message: Message = payload && payload.message ? payload.message : payload;
+    socketIO.on("new-message", (payload: MessagePayload) => {
+      const message: Message = payload && payload.message ? payload.message : payload as Message;
       console.log("📨 Received new message:", message);
 
       // Add message to state
@@ -264,7 +273,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     return () => {
       socketIO.disconnect();
     };
-  }, [roomId, sender]);
+  }, [roomId, sender, showNotification]);
 
   // Fetch existing messages
   useEffect(() => {
