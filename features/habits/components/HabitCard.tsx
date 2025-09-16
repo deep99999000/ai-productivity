@@ -1,175 +1,150 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
-import { Flame, Clock4, CheckCircle2, RotateCcw, Edit, Trash2 } from "lucide-react";
-import { useHabit } from "@/features/habits/HabitStore";
+import { Flame, RotateCcw, Edit, Trash2, Check, X, TrendingUp } from "lucide-react";
 import HabitForm from "./HabitForm";
 import type { Habit } from "@/features/habits/habitSchema";
 
-function todayISO() { return new Date().toISOString().slice(0,10); }
-
-function computeStreak(map: Record<string, boolean>): number {
-  if (!map) return 0;
-  const today = new Date();
-  let s = 0;
-  for (let i = 0; i < 365; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
-    if (map[iso]) s++; else break;
-  }
-  return s;
-}
-
-function last30Progress(map: Record<string, boolean>): number {
-  if (!map) return 0;
-  const today = new Date();
-  let count = 0;
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
-    if (map[iso]) count++;
-  }
-  return Math.round((count / 30) * 100);
-}
-
-const WEEK_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+// Weekday labels
+const WEEK_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export default function HabitCard({ habit }: { habit: Habit }) {
-  const { toggleCheckin, deleteHabit, checkins } = useHabit();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const map = checkins[String(habit.id)] ?? {};
-  const doneToday = !!map[todayISO()];
-  const streak = useMemo(() => computeStreak(map), [map]);
-  const progress30 = useMemo(() => last30Progress(map), [map]);
+  // ✅ Static values instead of computed logic
+  const streak = 5;
+  const weekCompletion = 70;
+  const doneToday = false;
 
-  const plannedDays: number[] = useMemo(() => {
-    const freq = (habit as any).frequency ?? "daily";
-    if (freq === "daily") return [0,1,2,3,4,5,6];
-    if (freq === "weekly" || freq === "custom") return ((habit as any).days ?? [1,2,3,4,5]) as number[];
-    return [1,2,3,4,5];
-  }, [habit]);
+  //get streak 
+  const getstreak = (habit: Habit) => {
+    
+  };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="group border-slate-200/80 hover:shadow-lg transition-all duration-200 bg-white/80 backdrop-blur">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+    >
+      <Card className="group border-slate-200/60 hover:border-slate-300/80 hover:shadow-lg transition-all duration-300 bg-white/90 backdrop-blur-sm">
         <CardContent className="p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4 min-w-0 flex-1">
-              <div className="text-4xl leading-none select-none mt-1">{habit.emoji ?? "✅"}</div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-lg break-words leading-tight">
-                  {habit.name}
-                </h3>
-                {habit.description && (
-                  <p className="text-sm text-slate-600 mt-2 break-words leading-relaxed">
-                    {habit.description}
-                  </p>
-                )}
-                <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Flame className="h-4 w-4 text-orange-500"/>
-                    <span className="font-medium">{streak}</span>
-                    <span>day streak</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Clock4 className="h-4 w-4 text-sky-500"/>
-                    <span className="font-medium">{progress30}%</span>
-                    <span>30d progress</span>
-                  </span>
+          <div className="relative">
+            <div className="flex items-start justify-between gap-4 relative z-10">
+              <div className="flex items-start gap-4 min-w-0 flex-1">
+                <div className="text-3xl leading-none select-none mt-1 shrink-0 filter drop-shadow-sm">
+                  {habit.emoji ?? "✅"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-lg leading-snug truncate">
+                    {habit.name}
+                  </h3>
+                  {habit.description && (
+                    <p className="text-sm text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
+                      {habit.description}
+                    </p>
+                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/50">
+                      Daily
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col items-end gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-50 to-red-50 text-orange-700 text-xs font-semibold border border-orange-200/50">
+                  <Flame className="h-3.5 w-3.5"/>
+                  <span>{streak}</span>
+                  <span className="opacity-75">days</span>
+                </span>
+                
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  <HabitForm
+                    defaultValues={{
+                      id: habit.id as number,
+                      name: habit.name,
+                      description: habit.description ?? undefined,
+                      emoji: habit.emoji ?? "✅",
+                      frequency: "daily",
+                    }}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 hover:scale-105 transition-transform">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+
+                  <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 hover:scale-105 transition-transform">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Delete habit?</DialogTitle>
+                      </DialogHeader>
+                      <p className="text-sm text-slate-600">
+                        This will remove "{habit.name}" permanently.
+                      </p>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={() => setConfirmOpen(false)}>Delete</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <HabitForm
-                defaultValues={{
-                  id: habit.id as number,
-                  name: habit.name,
-                  description: habit.description ?? undefined,
-                  emoji: habit.emoji ?? "✅",
-                  frequency: (habit as any).frequency ?? "daily",
-                  days: (habit as any).days ?? undefined,
-                }}
-                trigger={
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                }
-              />
-
-              <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Delete habit?</DialogTitle>
-                  </DialogHeader>
-                  <p className="text-sm text-slate-600">This will remove the habit and its local check-ins.</p>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
-                    <Button variant="destructive" onClick={() => { deleteHabit(habit.id as number); setConfirmOpen(false); }}>Delete</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
           </div>
 
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-600">30-Day Progress</span>
-              <span className="text-xs font-semibold text-slate-900">{progress30}%</span>
-            </div>
-            <Progress value={progress30} className="h-2" />
-          </div>
-
-          <div className="mt-4">
-            <p className="text-xs font-medium mb-2 text-slate-600">This Week</p>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {WEEK_LETTERS.map((l, idx) => {
-                const active = plannedDays.includes(idx);
-                return (
-                  <span
-                    key={idx}
-                    className={`h-8 w-8 inline-flex items-center justify-center rounded-lg text-xs font-medium border transition ${
-                      active 
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800" 
-                        : "bg-slate-50 text-slate-400 border-slate-200 dark:bg-slate-900 dark:border-slate-800"
-                    }`}
-                    title={active ? "Planned" : "Not planned"}
-                  >
-                    {l}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-
+          {/* Static Week Grid */}
           <div className="mt-5">
-            {doneToday ? (
-              <Button 
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-medium py-2.5" 
-                onClick={() => toggleCheckin(habit.id)}
-              >
-                <RotateCcw className="h-4 w-4 mr-2" /> 
-                Uncheck Today
-              </Button>
-            ) : (
-              <Button 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5" 
-                onClick={() => toggleCheckin(habit.id)}
-              >
-                Check In Now
-              </Button>
-            )}
+            <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-slate-500 mb-3 px-0.5">
+              {WEEK_LETTERS.map((l, i) => (
+                <span key={i} className="w-8 text-center">{l}</span>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-2">
+              {[...Array(7)].map((_, idx) => (
+                <div 
+                  key={idx}
+                  className="h-8 w-8 rounded-lg flex items-center justify-center text-xs font-medium bg-slate-100 text-slate-400 border border-slate-200"
+                >
+                  {idx === 2 ? <Check className="h-3.5 w-3.5" /> : idx === 4 ? <X className="h-3.5 w-3.5" /> : ""}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Week progress */}
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <span className="text-slate-600">
+              Week Progress: <span className="font-semibold text-emerald-600">{weekCompletion}%</span>
+            </span>
+            <TrendingUp className="h-4 w-4 text-emerald-600" />
+          </div>
+
+          {/* Check-in button */}
+          <div className="mt-5">
+            <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+              {doneToday ? (
+                <Button className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2.5 shadow-sm hover:shadow-md transition-all duration-200">
+                  <RotateCcw className="h-4 w-4 mr-2" /> 
+                  Uncheck Today
+                </Button>
+              ) : (
+                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 shadow-sm hover:shadow-md transition-all duration-200">
+                  <Check className="h-4 w-4 mr-2" />
+                  Check In Now
+                </Button>
+              )}
+            </motion.div>
           </div>
         </CardContent>
       </Card>

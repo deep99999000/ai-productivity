@@ -1,4 +1,12 @@
-import { pgTable, integer, varchar, boolean, timestamp, json, bigint } from "drizzle-orm/pg-core";
+import { 
+  pgTable, 
+  integer, 
+  varchar, 
+  boolean, 
+  timestamp, 
+  json, 
+  bigint 
+} from "drizzle-orm/pg-core";
 import { usersTable } from "@/db/schema";
 
 // Habit table captures definition + user preferences
@@ -12,10 +20,9 @@ export const habitTable = pgTable("habit_table", {
 
   // frequency: daily | weekly | custom
   frequency: varchar("frequency", { length: 20 }).default("daily").notNull(),
-  // selected days for weekly/custom like [1,2,3] where 0=Sun
-  days: json("days"),
 
-  isArchived: boolean("is_archived").default(false).notNull(),
+  // ✅ NEW: store streak stats
+  highestStreak: integer("highest_streak").default(0).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
@@ -25,7 +32,6 @@ export const habitCheckinTable = pgTable("habit_checkin", {
   habit_id: bigint("habit_id", { mode: "number" }).notNull(),
   user_id: integer("user_id").notNull(),
   date: timestamp("date", { mode: "date" }).notNull(),
-  done: boolean("done").default(true).notNull(),
 });
 
 export type Habit = typeof habitTable.$inferSelect;

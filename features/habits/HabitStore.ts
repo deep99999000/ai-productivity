@@ -2,74 +2,139 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Habit, NewHabit } from "@/features/habits/habitSchema";
 
-export type HabitFilter = "all" | "active" | "archived" | "completed";
+// date-fns utilities
+import { formatISO, subDays } from "date-fns";
 
-export type HabitState = {
+export type HabitStore = {
   habits: Habit[];
-  filter: HabitFilter;
-  setHabits: (h: Habit[]) => void;
-  addHabit: (h: NewHabit) => void;
-  editHabit: (h: Habit) => void;
-  updateHabit: (h: Habit) => void; // alias
+  allHabits: Habit[];
+  filter: "all" | "active" | "archived" | "completed";
+  checkins: Record<string, Record<string, boolean>>;
+
+  setHabits: (newHabits: Habit[]) => void;
+  addHabit: (newHabit: NewHabit) => void;
   deleteHabit: (id: number) => void;
-  setFilter: (f: HabitFilter) => void;
+  clearHabits: () => void;
+  getHabitByIndex: (index: number) => Habit | undefined;
+  editHabit: (updatedHabit: Habit) => void;
+  updateHabit: (updatedHabit: Habit) => void;
+
+  setCheckins: (checkins: HabitStore["checkins"]) => void;
   toggleCheckin: (id: number, dateISO?: string) => void;
-  checkins: Record<string, Record<string, boolean>>; // habitId -> { yyyy-mm-dd: true }
-  setCheckins: (c: HabitState["checkins"]) => void;
 };
 
-const todayISO = () => new Date().toISOString().slice(0,10);
+// ✅ Get today's date in YYYY-MM-DD format
+const todayISO = () => formatISO(new Date(), { representation: "date" });
 
-export const useHabit = create<HabitState>()(
+// ✅ Compute streak by checking consecutive past days
+function computeStreak(map: Record<string, boolean>): number {
+  if (!map) return 0;
+  let streak = 0;
+
+  for (let i = 0; i < 365; i++) {
+    // go backwards day by day
+    const day = subDays(new Date(), i);
+    
+    const iso = formatISO(day, { representation: "date" });
+    console.log("checking", iso, map[iso]);
+
+    if (map[iso]) streak++;
+    else break; // stop streak if gap found
+  }
+
+  return streak;
+}
+
+export const useHabit = create<HabitStore>()(
   persist(
     (set, get) => ({
       habits: [],
+      allHabits: [],
       filter: "all",
       checkins: {},
 
-      setHabits: (h) => set({ habits: h }),
+      setHabits: (newHabits) => set({ habits: newHabits, allHabits: newHabits }),
 
-      addHabit: (h) => set((s) => {
-        const full: Habit = {
-          id: Math.floor(Math.random() * 1e9),
-          user_id: (h as any).user_id ?? 0,
-          name: h.name!,
-          description: h.description ?? null,
-          emoji: (h as any).emoji ?? "✅",
-          frequency: (h as any).frequency ?? "daily",
-          days: (h as any).days ?? null,
-          isArchived: false,
-          createdAt: (h as any).createdAt ?? new Date(),
-        } as unknown as Habit;
-        return { habits: [full, ...s.habits] };
-      }),
+      addHabit: (newHabit) =>
+        set((state) => {
+          const tempHabit: Habit = {
+            id: Math.floor(Math.random() * 1e9),
+            user_id: (newHabit as any).user_id ?? 0,
+            name: newHabit.name!,
+            description: (newHabit as any).description ?? null,
+            emoji: (newHabit as any).emoji ?? "✅",
+            frequency: (newHabit as any).frequency ?? "daily",
+            highestStreak: (newHabit as any).highestStreak ?? 0,
+            createdAt: (newHabit as any).createdAt ?? new Date(),
+          };
+          const next = [tempHabit, ...state.habits];
+          return { habits: next, allHabits: next };
+        }),
 
-      editHabit: (h) => set((s) => ({
-        habits: s.habits.map((x) => (x.id === h.id ? { ...x, ...h } : x)),
-      })),
+      deleteHabit: (id) =>
+        set((state) => {
+          const next = state.habits.filter((habit) => habit.id !== id);
+          return { habits: next, allHabits: next };
+        }),
 
-      updateHabit: (h) => set((s) => ({
-        habits: s.habits.map((x) => (x.id === h.id ? { ...x, ...h } : x)),
-      })),
+      clearHabits: () => set({ habits: [], allHabits: [] }),
 
-      deleteHabit: (id) => set((s) => ({ habits: s.habits.filter((x) => x.id !== id) })),
+      getHabitByIndex: (index) => get().habits[index],
 
-      setFilter: (f) => set({ filter: f }),
+      editHabit: (updatedHabit) =>
+        set((state) => {
+          const next = state.habits.map((habit) =>
+            habit.id === updatedHabit.id ? { ...habit, ...updatedHabit } : habit
+          );
+          return { habits: next, allHabits: next };
+        }),
 
-      setCheckins: (c) => set({ checkins: c }),
+      updateHabit: (updatedHabit) =>
+        set((state) => {
+          const next = state.habits.map((habit) =>
+            habit.id === updatedHabit.id ? { ...habit, ...updatedHabit } : habit
+          );
+          return { habits: next, allHabits: next };
+        }),
 
-      toggleCheckin: (id, date = todayISO()) => set((s) => {
-        const hid = String(id);
-        const byHabit = s.checkins[hid] ?? {};
-        const nextVal = !byHabit[date];
-        return {
-          checkins: {
-            ...s.checkins,
-            [hid]: { ...byHabit, [date]: nextVal },
-          },
-        };
-      }),
+      setCheckins: (checkins) => set({ checkins }),
+
+      toggleCheckin: (id, date = todayISO()) =>
+        set((state) => {
+          const habitId = String(id);
+          const byHabit = state.checkins[habitId] ?? {};
+          const nextVal = !byHabit[date];
+          const updatedHabitCheckins = { ...byHabit, [date]: nextVal };
+
+          // ✅ update streak if checked today
+          let updatedHabits = state.habits;
+          if (nextVal) {
+            const newStreak = computeStreak(updatedHabitCheckins);
+            updatedHabits = state.habits.map((h) =>
+              h.id === id
+                ? { ...h, highestStreak: Math.max(h.highestStreak ?? 0, newStreak) }
+                : h
+            );
+          }
+
+          return {
+            checkins: {
+              ...state.checkins,
+              [habitId]: updatedHabitCheckins,
+            },
+            habits: updatedHabits,
+            allHabits: updatedHabits,
+          };
+        }),
     }),
-    { name: "habit-store" }
+    {
+      name: "habits-store",
+      partialize: (state) => ({
+        habits: state.habits,
+        allHabits: state.allHabits,
+        filter: state.filter,
+        checkins: state.checkins,
+      }),
+    }
   )
 );
