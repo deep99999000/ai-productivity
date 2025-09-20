@@ -3,8 +3,8 @@ import next from "next";
 import { Server } from "socket.io";
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
-const port = 3000;
+const hostname = process.env.HOSTNAME || "0.0.0.0";
+const port = Number(process.env.PORT) || 3000;
 
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
@@ -12,11 +12,17 @@ const handler = app.getRequestHandler();
 app.prepare().then(() => {
   const httpServer = createServer(handler);
 
+  // Derive allowed origin for production
+  const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || vercelUrl;
+
   const io = new Server(httpServer, {
     cors: {
-      origin: dev ? `http://${hostname}:${port}` : false,
+      origin: dev ? `http://localhost:${port}` : siteUrl || true,
       methods: ["GET", "POST"],
+      credentials: true,
     },
+    transports: ["websocket", "polling"],
   });
 
   io.on("connection", (socket) => {
@@ -46,7 +52,10 @@ app.prepare().then(() => {
       console.error(err);
       process.exit(1);
     })
-    .listen(port, () => {
+    .listen(port, hostname, () => {
       console.log(`> Ready on http://${hostname}:${port}`);
+      if (!dev && siteUrl) {
+        console.log(`CORS origin set to: ${siteUrl}`);
+      }
     });
 });

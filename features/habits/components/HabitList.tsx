@@ -1,13 +1,12 @@
 "use client";
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import HabitCard from "./HabitCard";
 import { useHabit } from "@/features/habits/HabitStore";
-import HabitForm from "./HabitForm";
+
 
 export default function HabitList() {
-  const { habits } = useHabit();
+  const { allHabits } = useHabit();
 
   return (
     <Card className="border-slate-200/80 bg-white/80 backdrop-blur">
@@ -23,8 +22,8 @@ export default function HabitList() {
       </CardHeader>
 
       <CardContent className=" grid sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {habits.length ? (
-          habits.map((h) => <HabitCard key={h.id} habit={h as any} />)
+        {allHabits.length ? (
+          allHabits.map((h) => <HabitCard key={h.id} habit={h as any} />)
         ) : (
           <div className="col-span-full text-center py-8">
             <p className="text-slate-500">No habits to show.</p>

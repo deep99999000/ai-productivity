@@ -1,15 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Habit, NewHabit } from "@/features/habits/habitSchema";
-
-// date-fns utilities
 import { formatISO, subDays } from "date-fns";
 
 export type HabitStore = {
-  habits: Habit[];
   allHabits: Habit[];
-  filter: "all" | "active" | "archived" | "completed";
-  checkins: Record<string, Record<string, boolean>>;
 
   setHabits: (newHabits: Habit[]) => void;
   addHabit: (newHabit: NewHabit) => void;
@@ -19,41 +14,35 @@ export type HabitStore = {
   editHabit: (updatedHabit: Habit) => void;
   updateHabit: (updatedHabit: Habit) => void;
 
-  setCheckins: (checkins: HabitStore["checkins"]) => void;
-  toggleCheckin: (id: number, dateISO?: string) => void;
+  toggleCheckin: (id: number, date?: string) => void;
 };
 
-// ✅ Get today's date in YYYY-MM-DD format
+// ✅ today's date
 const todayISO = () => formatISO(new Date(), { representation: "date" });
 
-// ✅ Compute streak by checking consecutive past days
-function computeStreak(map: Record<string, boolean>): number {
-  if (!map) return 0;
+// ✅ streak calculator
+function computeStreak(days: string[]): number {
+  if (!days?.length) return 0;
+
+  const set = new Set(days);
   let streak = 0;
 
   for (let i = 0; i < 365; i++) {
-    // go backwards day by day
-    const day = subDays(new Date(), i);
-    
-    const iso = formatISO(day, { representation: "date" });
-    console.log("checking", iso, map[iso]);
+    const d = subDays(new Date(), i);
+    const iso = formatISO(d, { representation: "date" });
 
-    if (map[iso]) streak++;
-    else break; // stop streak if gap found
+    if (set.has(iso)) streak++;
+    else break; // stop at first gap
   }
-
   return streak;
 }
 
 export const useHabit = create<HabitStore>()(
   persist(
     (set, get) => ({
-      habits: [],
       allHabits: [],
-      filter: "all",
-      checkins: {},
 
-      setHabits: (newHabits) => set({ habits: newHabits, allHabits: newHabits }),
+      setHabits: (newHabits) => set({ allHabits: newHabits }),
 
       addHabit: (newHabit) =>
         set((state) => {
@@ -63,77 +52,65 @@ export const useHabit = create<HabitStore>()(
             name: newHabit.name!,
             description: (newHabit as any).description ?? null,
             emoji: (newHabit as any).emoji ?? "✅",
-            frequency: (newHabit as any).frequency ?? "daily",
             highestStreak: (newHabit as any).highestStreak ?? 0,
+            checkInDays: (newHabit as any).checkInDays ?? [],
             createdAt: (newHabit as any).createdAt ?? new Date(),
           };
-          const next = [tempHabit, ...state.habits];
-          return { habits: next, allHabits: next };
+          return { allHabits: [tempHabit, ...state.allHabits] };
         }),
 
       deleteHabit: (id) =>
-        set((state) => {
-          const next = state.habits.filter((habit) => habit.id !== id);
-          return { habits: next, allHabits: next };
-        }),
+        set((state) => ({
+          allHabits: state.allHabits.filter((h) => h.id !== id),
+        })),
 
-      clearHabits: () => set({ habits: [], allHabits: [] }),
+      clearHabits: () => set({ allHabits: [] }),
 
-      getHabitByIndex: (index) => get().habits[index],
+      getHabitByIndex: (index) => get().allHabits[index],
 
       editHabit: (updatedHabit) =>
-        set((state) => {
-          const next = state.habits.map((habit) =>
-            habit.id === updatedHabit.id ? { ...habit, ...updatedHabit } : habit
-          );
-          return { habits: next, allHabits: next };
-        }),
+        set((state) => ({
+          allHabits: state.allHabits.map((h) =>
+            h.id === updatedHabit.id ? { ...h, ...updatedHabit } : h
+          ),
+        })),
 
       updateHabit: (updatedHabit) =>
-        set((state) => {
-          const next = state.habits.map((habit) =>
-            habit.id === updatedHabit.id ? { ...habit, ...updatedHabit } : habit
-          );
-          return { habits: next, allHabits: next };
-        }),
-
-      setCheckins: (checkins) => set({ checkins }),
+        set((state) => ({
+          allHabits: state.allHabits.map((h) =>
+            h.id === updatedHabit.id ? { ...h, ...updatedHabit } : h
+          ),
+        })),
 
       toggleCheckin: (id, date = todayISO()) =>
         set((state) => {
-          const habitId = String(id);
-          const byHabit = state.checkins[habitId] ?? {};
-          const nextVal = !byHabit[date];
-          const updatedHabitCheckins = { ...byHabit, [date]: nextVal };
-
-          // ✅ update streak if checked today
-          let updatedHabits = state.habits;
-          if (nextVal) {
-            const newStreak = computeStreak(updatedHabitCheckins);
-            updatedHabits = state.habits.map((h) =>
-              h.id === id
-                ? { ...h, highestStreak: Math.max(h.highestStreak ?? 0, newStreak) }
-                : h
-            );
-          }
-
           return {
-            checkins: {
-              ...state.checkins,
-              [habitId]: updatedHabitCheckins,
-            },
-            habits: updatedHabits,
-            allHabits: updatedHabits,
+            allHabits: state.allHabits.map((h) => {
+              if (h.id !== id) return h;
+
+              const days = new Set(h.checkInDays ?? []);
+              if (days.has(date)) {
+                days.delete(date); // uncheck
+              } else {
+                days.add(date); // check
+              }
+
+              const dayArr = Array.from(days);
+              const newStreak = computeStreak(dayArr);
+
+              return {
+                ...h,
+                checkInDays: dayArr,
+                highestStreak: Math.max(h.highestStreak ?? 0, newStreak),
+              };
+            }),
           };
         }),
     }),
     {
       name: "habits-store",
       partialize: (state) => ({
-        habits: state.habits,
         allHabits: state.allHabits,
-        filter: state.filter,
-        checkins: state.checkins,
       }),
     }
   )

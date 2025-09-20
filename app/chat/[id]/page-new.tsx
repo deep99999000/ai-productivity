@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { use } from "react";
 import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const roomId = resolvedParams.id;
 
   // Simple notification function that ALWAYS works
-  const showNotification = (message: Message) => {
+  const showNotification = useCallback((message: Message) => {
     if (message.sender === sender) return; // Don't notify own messages
     
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
@@ -36,7 +36,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         const notification = new Notification(`💬 ${message.sender}`, {
           body: message.text,
           icon: "/favicon.ico",
-          tag: `chat-${Date.now()}-${Math.random()}`, // Always unique
+          tag: `chat-${Date.now()}-${Math.random()}`,
         });
         
         notification.onclick = () => {
@@ -44,19 +44,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           notification.close();
         };
         
-        // Auto close
         setTimeout(() => notification.close(), 5000);
       } catch (e) {
         console.log("Notification failed:", e);
       }
     }
     
-    // Always show toast as backup
     toast(`${message.sender}: ${message.text}`, {
       duration: 3000,
       position: 'top-right',
     });
-  };
+  }, [sender]);
 
   // Request notification permission
   const requestPermission = async () => {
@@ -78,7 +76,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   // Socket connection
   useEffect(() => {
-    const socketIO = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+    const isProd = process.env.NODE_ENV === 'production';
+    const SOCKET_URL = isProd ? process.env.NEXT_PUBLIC_SOCKET_URL : 'http://localhost:3000';
+
+    if (isProd && !SOCKET_URL) {
+      console.warn('NEXT_PUBLIC_SOCKET_URL is not set. Socket will try to connect to current origin, which will fail on Vercel.');
+    }
+
+    const socketIO = io(SOCKET_URL, {
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+    });
     
     socketIO.on("connect", () => {
       setIsConnected(true);
@@ -98,7 +106,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     return () => {
       socketIO.disconnect();
     };
-  }, [roomId, sender]);
+  }, [roomId, showNotification]);
 
   // Fetch messages
   useEffect(() => {

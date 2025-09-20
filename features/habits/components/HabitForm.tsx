@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useHabit } from "@/features/habits/HabitStore";
 
@@ -126,26 +125,6 @@ export default function HabitForm({
         <Textarea placeholder="Short motivation or details" {...register("description")} />
       </div>
 
-      <div className="grid gap-2">
-        <Label>Frequency</Label>
-        <Select value={frequency} onValueChange={(v: any) => setValue("frequency", v)}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Daily" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="daily">Daily</SelectItem>
-            <SelectItem value="weekly">Weekly</SelectItem>
-            <SelectItem value="custom">Custom</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {(frequency === "weekly" || frequency === "custom") && (
-        <div className="grid gap-2">
-          <Label>Days</Label>
-          <DaysSelector />
-        </div>
-      )}
 
       <div className="pt-2 flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
