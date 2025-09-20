@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
+import { API } from "@/lib/actions/getbackendurl";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.HOSTNAME || "0.0.0.0";
@@ -18,7 +19,7 @@ app.prepare().then(() => {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: dev ? `http://localhost:${port}` : siteUrl || true,
+      origin: dev ? `${API}` : siteUrl || true,
       methods: ["GET", "POST"],
       credentials: true,
     },

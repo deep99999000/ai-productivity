@@ -7,7 +7,6 @@ import { useHabit } from "@/features/habits/HabitStore";
 
 export default function HabitList() {
   const { allHabits } = useHabit();
-
   return (
     <Card className="border-slate-200/80 bg-white/80 backdrop-blur">
       <CardHeader className=" flex-row items-center justify-between">

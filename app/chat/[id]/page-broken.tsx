@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, MessageCircle, Bell, BellOff, Phone, Video, Camera, Smile, Heart } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
+import { API } from "@/lib/actions/getbackendurl";
 
 interface Message {
   id: string;
@@ -237,7 +238,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   // Initialize socket connection
   useEffect(() => {
-    const socketIO = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+    const socketIO = io(API);
     
     socketIO.on("connect", () => {
       setIsConnected(true);

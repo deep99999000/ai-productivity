@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, MessageCircle, Bell, BellOff } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
+import { API } from "@/lib/actions/getbackendurl";
 
 interface Message {
   id: string;
@@ -77,7 +78,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Socket connection
   useEffect(() => {
     const isProd = process.env.NODE_ENV === 'production';
-    const SOCKET_URL = isProd ? process.env.NEXT_PUBLIC_SOCKET_URL : 'http://localhost:3000';
+    const SOCKET_URL =API;
 
     if (isProd && !SOCKET_URL) {
       console.warn('NEXT_PUBLIC_SOCKET_URL is not set. Socket will try to connect to current origin, which will fail on Vercel.');

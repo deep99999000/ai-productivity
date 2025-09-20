@@ -12,7 +12,7 @@ import { Label } from "@radix-ui/react-label";
 import { Target, Sparkles, Calendar, Tag, FileText, Loader2, Wand2 } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios"; // 👈 import axios
+import axios from "axios"; 
 
 const NewGoalDialog = ({
   isOpen,

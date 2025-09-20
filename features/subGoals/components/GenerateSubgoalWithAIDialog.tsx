@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import type { Subgoal, NewSubgoal } from "@/features/subGoals/subGoalschema"; // Adjust path if needed
 import GeneratedSubgoalCard from "./GeneratedSubgoalCard";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
+import { API } from "@/lib/actions/getbackendurl";
 
 export type GeneratedSubgoal = {
   name: string;
@@ -53,7 +54,7 @@ const GenerateSubgoalWithAIDialog = ({ goalId }: { goalId: number }) => {
 
     try {
       const response = await axios.post<{ content: GeneratedSubgoal[] }>(
-        "http://localhost:3000/api/content/generate",
+        `${API}/api/content/generate`,
         {
           name: data.name,
           description: data.description,

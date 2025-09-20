@@ -4,48 +4,43 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Flame,
-  RotateCcw,
-  Edit,
-  Trash2,
-  Check,
-  TrendingUp,
-} from "lucide-react";
+import { Flame, RotateCcw, Edit, Trash2, Check, TrendingUp } from "lucide-react";
 import HabitForm from "./HabitForm";
 import type { Habit } from "@/features/habits/habitSchema";
-
-import {
-  eachDayOfInterval,
-  endOfWeek,
-  format,
-  startOfWeek,
-} from "date-fns";
+import { eachDayOfInterval, endOfWeek, format, startOfWeek } from "date-fns";
 import { useHabit } from "@/features/habits/HabitStore";
+import { deletehabitaction } from "@/features/habits/Habitaction";
 
-export default function HabitCard({ habit }: { habit: Habit }) {
+interface HabitCardProps {
+  habit: Habit;
+}
+
+export default function HabitCard({ habit }: HabitCardProps) {
   const { toggleCheckin, deleteHabit } = useHabit();
 
-  // week days (Mon–Sun)
+  // Week days labels
   const WEEK_DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
-  // get current week’s dates
+  // Current week dates
   const weekDates = (() => {
     const today = new Date();
     const start = startOfWeek(today, { weekStartsOn: 1 });
     const end = endOfWeek(today, { weekStartsOn: 1 });
-    return eachDayOfInterval({ start, end }).map((d) =>
-      format(d, "yyyy-MM-dd")
-    );
+    return eachDayOfInterval({ start, end }).map((d) => format(d, "yyyy-MM-dd"));
   })();
 
-  // weekly completion %
+  // Weekly completion %
   const weekCompletionPercentage =
-    (weekDates.filter((date) => habit.checkInDays?.includes(date)).length *
-      100) /
+    (weekDates.filter((date) => habit.checkInDays?.includes(date)).length * 100) /
     weekDates.length;
+
   const today = format(new Date(), "yyyy-MM-dd");
   const isTodayChecked = habit.checkInDays?.includes(today);
+
+  const handleDeleteHabit = async () => {
+    deleteHabit(habit.id);
+    await deletehabitaction(habit.id);
+  };
 
   return (
     <motion.div
@@ -55,32 +50,28 @@ export default function HabitCard({ habit }: { habit: Habit }) {
     >
       <Card className="group border-slate-200/60 hover:border-slate-300/80 hover:shadow-lg transition-all duration-300 bg-white/90 backdrop-blur-sm">
         <CardContent className="p-6">
-          {/* top info */}
+          {/* Top info */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4 flex-1">
               <div className="text-3xl mt-1">{habit.emoji ?? "✅"}</div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg text-slate-900 truncate">
-                  {habit.name}
-                </h3>
+                <h3 className="font-semibold text-lg text-slate-900 truncate">{habit.name}</h3>
                 {habit.description && (
-                  <p className="text-sm text-slate-600 mt-1.5 line-clamp-2">
-                    {habit.description}
-                  </p>
+                  <p className="text-sm text-slate-600 mt-1.5 line-clamp-2">{habit.description}</p>
                 )}
                 <div className="mt-3">
                   <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/50">
-                    {"daily"}
+                    daily
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* action buttons */}
+            {/* Action buttons */}
             <div className="flex flex-col items-end gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs font-semibold border border-orange-200/50">
                 <Flame className="h-3.5 w-3.5" />
-                <span>{habit.highestStreak}</span>
+                <span>{habit.highestStreak || 0}</span>
                 <span className="opacity-75">days</span>
               </span>
 
@@ -91,24 +82,18 @@ export default function HabitCard({ habit }: { habit: Habit }) {
                     name: habit.name,
                     description: habit.description ?? undefined,
                     emoji: habit.emoji ?? "✅",
-                 
                   }}
                   trigger={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-slate-100"
-                    >
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100">
                       <Edit className="h-4 w-4" />
                     </Button>
                   }
                 />
-
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
-                  onClick={() => deleteHabit(habit.id as number)}
+                  onClick={handleDeleteHabit}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -116,7 +101,7 @@ export default function HabitCard({ habit }: { habit: Habit }) {
             </div>
           </div>
 
-          {/* week view */}
+          {/* Week view */}
           <div className="mt-5">
             <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
               {WEEK_DAYS.map((day, i) => (
@@ -125,29 +110,24 @@ export default function HabitCard({ habit }: { habit: Habit }) {
                 </span>
               ))}
             </div>
-
             <div className="grid grid-cols-7 gap-2">
-              {weekDates.map((date) =>
-                habit.checkInDays?.includes(date) ? (
+              {weekDates.map((date) => {
+                const checked = habit.checkInDays?.includes(date);
+                return (
                   <span
                     key={date}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-600 text-white text-xs font-bold"
+                    className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold ${
+                      checked ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-500"
+                    }`}
                   >
                     {format(new Date(date), "d")}
                   </span>
-                ) : (
-                  <span
-                    key={date}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 text-slate-500 text-xs"
-                  >
-                    {format(new Date(date), "d")}
-                  </span>
-                )
-              )}
+                );
+              })}
             </div>
           </div>
 
-          {/* progress bar */}
+          {/* Progress bar */}
           <div className="mt-4 flex items-center justify-between text-sm">
             <span className="text-slate-600">
               Week Progress:{" "}
@@ -158,7 +138,7 @@ export default function HabitCard({ habit }: { habit: Habit }) {
             <TrendingUp className="h-4 w-4 text-emerald-600" />
           </div>
 
-          {/* check-in btn */}
+          {/* Check-in button */}
           <div className="mt-5">
             {isTodayChecked ? (
               <Button

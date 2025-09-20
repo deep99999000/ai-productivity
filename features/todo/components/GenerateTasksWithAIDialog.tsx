@@ -14,6 +14,7 @@ import { useTodo } from "@/features/todo/todostore";
 import { NewTodo, type Todo } from "@/features/todo/todoSchema";
 import GeneratedTaskCard from "./GeneratedTaskCard";
 import useUser from "@/store/useUser";
+import { API } from "@/lib/actions/getbackendurl";
 
 // Type for AI-generated task (frontend only)
 export type GeneratedTask = {
@@ -59,7 +60,7 @@ const GenerateTasksWithAIDialog = ({
 
     try {
       const response = await axios.post<{ content: GeneratedTask[] }>(
-        "http://localhost:3000/api/content/generate",
+        `${API}/api/content/generate`,
         {
           name: data.name,
           description: data.description,

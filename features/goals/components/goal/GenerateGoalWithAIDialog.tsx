@@ -15,6 +15,7 @@ import GeneratedGoalCard from "./GeneratedGoalCard";
 import useUser from "@/store/useUser";
 import { useGoal } from "@/features/goals/GoalStore";
 import { newGoalsAction } from "@/features/goals/goalaction";
+import { API } from "@/lib/actions/getbackendurl";
 
 // Type for AI-generated goal (frontend only)
 export type GeneratedGoal = {
@@ -49,7 +50,7 @@ const GenerateGoalsWithAIDialog = () => {
 
     try {
       const response = await axios.post<{ content: GeneratedGoal[] }>(
-        "http://localhost:3000/api/content/generate",
+        `${API}/api/content/generate`,
         {
           name: data.theme,
           description: data.description,
