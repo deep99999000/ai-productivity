@@ -40,7 +40,7 @@ import useUser from "@/store/useUser";
 import { useHabit } from "@/features/habits/utils/HabitStore";
 import { getAllUserHabits } from "@/features/habits/utils/Habitaction";
 import HabitQuickStats from "@/features/habits/main/HabitQuickStats";
-import { stat } from "fs";
+import GenerateHabitsWithAIDialog from "@/features/habits/ai/GenerateHabitsWithAIDialog";
 
 const HabitsDashboard = ({ user_id }: { user_id: number }) => {
   const {
@@ -146,6 +146,7 @@ const HabitsDashboard = ({ user_id }: { user_id: number }) => {
                 <span className="mr-2 h-2 w-2 rounded-full bg-green-500" />
                 {stats.completedToday}/{stats.totalHabits} today
               </Badge>
+              <GenerateHabitsWithAIDialog />
               <Button
                 onClick={() =>
                   isMobile ? setDrawerOpen(true) : setDialogOpen(true)

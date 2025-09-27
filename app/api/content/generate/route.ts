@@ -9,7 +9,7 @@ function initModel() {
   if (!apiKey) throw new Error("❌ GOOGLE_API_KEY is missing in .env");
 
   return new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-2.5-flash",
     apiKey,
     temperature: 0.7,
   });
@@ -47,9 +47,10 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!["task", "goals", "subgoals"].includes(type)) {
+
+    if (!["task", "goals", "subgoals", "habits"].includes(type)) {
       return Response.json(
-        { error: "Invalid type. Use 'task', 'goals', or 'subgoals'" },
+        { error: "Invalid type. Use 'task', 'goals', 'subgoals', or 'habits'" },
         { status: 400 }
       );
     }
@@ -105,6 +106,24 @@ Rules:
 - Ensure JSON is an array of 5 objects.
 - Dates must be between today and 1 year from today.
 - Each subgoal must have a meaningful description.`;
+    } else if (type === "habits") {
+      systemPrompt = `You are an expert habit coach AI.
+Generate exactly 5 HIGH-QUALITY habit suggestions based on the user's theme.
+Return ONLY valid JSON (array of 5 objects) – no markdown, no commentary.
+Each habit object MUST follow exactly this schema:
+{
+  "name": string (2-5 words, actionable, specific, NO numbering, NO quotes),
+  "emoji": string (single relevant emoji, no text, no duplicates)
+}
+Guidelines:
+- Names must be specific (e.g. "Exersice", not "Morning Mobility Flow").
+- Avoid generic verbs alone (good: "Meditate", bad: "5-Minute Calm Meditation").
+- No punctuation except hyphen if needed.
+- No duplicates or near-duplicates.
+- DO NOT include frequency words (Daily, Weekly) unless truly meaningful.
+- Pick varied focus angles (e.g. energy, focus, recovery, learning, wellness, discipline) depending on theme.
+- Emojis must match the habit concept and all be different.
+Return ONLY JSON.`;
     }
 
     const userPrompt = description

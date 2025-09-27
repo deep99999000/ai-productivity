@@ -20,6 +20,14 @@ import {
   deletehabitaction,
   toggleCheckInHabitAction,
 } from "@/features/habits/utils/Habitaction";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 
 interface HabitCardProps {
   habit: Habit;
@@ -49,6 +57,22 @@ export default function HabitCard({ habit }: HabitCardProps) {
 
   const today = format(new Date(), "yyyy-MM-dd");
   const isTodayChecked = habit.checkInDays?.includes(today);
+
+  // Compute current streak (consecutive days including today going backwards)
+  const computeCurrentStreak = (days: string[] | undefined): number => {
+    if (!days || days.length === 0) return 0;
+    const set = new Set(days);
+    let streak = 0;
+    for (let i = 0; i < 400; i++) {
+      // limit
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const iso = d.toISOString().split("T")[0];
+      if (set.has(iso)) streak++; else break;
+    }
+    return streak;
+  };
+  const currentStreak = computeCurrentStreak(habit.checkInDays || undefined);
 
   const handleDeleteHabit = async () => {
     deleteHabit(habit.id);
@@ -82,9 +106,9 @@ export default function HabitCard({ habit }: HabitCardProps) {
                   </p>
                 )}
                 <div className="mt-3">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200/50">
-                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
-                    daily
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200/50">
+                    <Flame className="h-3.5 w-3.5 text-orange-500" />
+                    {currentStreak}d streak
                   </span>
                 </div>
               </div>
@@ -92,13 +116,43 @@ export default function HabitCard({ habit }: HabitCardProps) {
 
             {/* Action buttons */}
             <div className="flex flex-col items-end gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-50 to-red-50 text-orange-700 text-xs font-semibold border border-orange-200/50 shadow-sm">
-                <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span>{habit.highestStreak || 0}</span>
-                <span className="opacity-75 hidden sm:inline">days</span>
-              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 hover:bg-slate-100 hover:scale-105 transition-all opacity-0 group-hover:opacity-100"
+                    aria-label="Actions"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      /* open edit form programmatically by clicking hidden trigger */
+                      const btn = document.getElementById(`habit-edit-${habit.id}`);
+                      btn?.click();
+                    }}
+                  >
+                    <Edit className="h-4 w-4" /> Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDeleteHabit();
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+              {/* Hidden HabitForm trigger for edit */}
+              <div className="hidden">
                 <HabitForm
                   defaultValues={{
                     id: habit.id,
@@ -108,24 +162,9 @@ export default function HabitCard({ habit }: HabitCardProps) {
                     frequency: "daily",
                   }}
                   trigger={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-slate-100 hover:scale-105 transition-all"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <button id={`habit-edit-${habit.id}`} type="button" />
                   }
                 />
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 hover:scale-105 transition-all"
-                  onClick={handleDeleteHabit}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
             </div>
           </div>

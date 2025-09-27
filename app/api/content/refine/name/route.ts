@@ -37,9 +37,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!["task", "goal", "subgoal"].includes(type)) {
+    if (!["task", "goal", "subgoal", "habit"].includes(type)) {
       return Response.json(
-        { error: "Invalid type. Use 'task', 'goal', or 'subgoal'" },
+        { error: "Invalid type. Use 'task', 'goal', 'subgoal', or 'habit'" },
         { status: 400 }
       );
     }

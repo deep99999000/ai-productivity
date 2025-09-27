@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import axios from "axios";
+import { Wand2, Loader2, Sparkles } from "lucide-react";
 
 import useUser from "@/store/useUser";
 import { newhabitaction } from "@/features/habits/utils/Habitaction";
@@ -53,8 +54,9 @@ export default function HabitForm({
   const { user } = useUser();
   const [open, setOpen] = useState(false);
   const [emoji, setEmoji] = useState(defaultValues?.emoji ?? "✅");
+  const [loadingName, setLoadingName] = useState(false);
 
-  const { register, handleSubmit, reset } = useForm<HabitFormValues>({
+  const { register, handleSubmit, reset, setValue, getValues } = useForm<HabitFormValues>({
     defaultValues: {
       name: defaultValues?.name ?? "",
       description: defaultValues?.description ?? "",
@@ -81,14 +83,13 @@ export default function HabitForm({
       return;
     }
 
-    // Otherwise, default behavior
     if (!user) return console.warn("No user found — habit not saved");
 
     const id = values.id ?? generateUniqueId();
     const payload = {
       id,
       name: values.name,
-      description: values.description ?? null,
+      description: null, // description removed
       emoji: emoji ?? null,
       frequency: values.frequency,
       user_id: user,
@@ -103,6 +104,21 @@ export default function HabitForm({
     reset();
     setEmoji("✅");
     setOpen(false);
+  };
+
+  // AI refine handlers
+  const refining = React.useRef<{ name: boolean; description: boolean }>({ name: false, description: false });
+  const [, force] = React.useState(0);
+
+  const refineName = async () => {
+    const current = getValues("name");
+    if (!current) return;
+    setLoadingName(true);
+    try {
+      const res = await axios.post("/api/content/refine/name", { type: "habit", name: current });
+      if (res.data?.refinedName) setValue("name", res.data.refinedName);
+    } catch (e) { console.error(e); }
+    setLoadingName(false);
   };
 
   const formBody = (
@@ -145,20 +161,29 @@ export default function HabitForm({
           </PopoverContent>
         </Popover>
         <div className="grid gap-2 flex-1">
-          <Label>Name</Label>
-          <Input
-            placeholder="e.g., Drink Water"
-            {...register("name", { required: true })}
-          />
+          <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-500" /> Name
+          </Label>
+          <div className="relative w-full">
+            <Input
+              id="habit-name"
+              placeholder="What habit do you want to build?"
+              {...register("name", { required: true })}
+              className="h-11 px-4 pr-12 w-full border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={refineName}
+              disabled={loadingName}
+              className="absolute right-2 top-2 h-8 w-8 p-0 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Enhance with AI"
+            >
+              {loadingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+            </Button>
+          </div>
         </div>
-      </div>
-
-      <div className="grid gap-2">
-        <Label>Description (optional)</Label>
-        <Textarea
-          placeholder="Short motivation or details"
-          {...register("description")}
-        />
       </div>
 
       <div className="pt-2 flex justify-end gap-2">
