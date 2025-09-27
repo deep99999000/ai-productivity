@@ -15,7 +15,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { useHabit } from "@/features/habits/HabitStore";
+import { useHabit } from "@/features/habits/utils/HabitStore";
 
 // Weekday labels
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

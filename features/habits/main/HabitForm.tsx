@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
@@ -21,14 +22,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useHabit } from "@/features/habits/HabitStore";
+
 import useUser from "@/store/useUser";
-import {
-  newhabitaction,
-  updatewhabitaction,
-} from "@/features/habits/Habitaction";
-import { id } from "date-fns/locale";
+import { newhabitaction } from "@/features/habits/utils/Habitaction";
 import { generateUniqueId } from "@/lib/generateUniqueId";
+import { useHabit } from "@/features/habits/utils/HabitStore";
 
 export type HabitFormValues = {
   id?: number;
@@ -36,63 +34,83 @@ export type HabitFormValues = {
   description?: string;
   emoji?: string;
   frequency: "daily" | "weekly" | "custom";
-  days?: number[]; // 0=Sun
 };
+
+interface HabitFormProps {
+  trigger?: React.ReactNode;
+  submitLabel?: string;
+  defaultValues?: HabitFormValues;
+  onSubmit?: (values: HabitFormValues) => void; // ← added external handler
+}
 
 export default function HabitForm({
   trigger,
+  submitLabel = "Add Habit",
   defaultValues,
-  onSubmit: onSubmitProp,
-  submitLabel,
-}: {
-  trigger?: React.ReactNode;
-  defaultValues?: Partial<HabitFormValues>;
-  onSubmit?: (values: HabitFormValues) => void;
-  submitLabel?: string;
-}) {
-  const { addHabit, updateHabit } = useHabit();
+  onSubmit,
+}: HabitFormProps) {
+  const { addHabit } = useHabit();
+  const { user } = useUser();
   const [open, setOpen] = useState(false);
   const [emoji, setEmoji] = useState(defaultValues?.emoji ?? "✅");
-  const { register, handleSubmit, watch, setValue } = useForm<HabitFormValues>({
+
+  const { register, handleSubmit, reset } = useForm<HabitFormValues>({
     defaultValues: {
       name: defaultValues?.name ?? "",
       description: defaultValues?.description ?? "",
-      frequency: (defaultValues?.frequency as any) ?? "daily",
-      days: (defaultValues?.days as any) ?? [1, 2, 3, 4, 5],
+      frequency: defaultValues?.frequency ?? "daily",
     },
   });
 
-  const { user } = useUser();
-  console.log("dd", user);
+  useEffect(() => {
+    if (defaultValues) {
+      reset({
+        name: defaultValues.name,
+        description: defaultValues.description ?? "",
+        frequency: defaultValues.frequency ?? "daily",
+      });
+      setEmoji(defaultValues.emoji ?? "✅");
+    }
+  }, [defaultValues, reset]);
 
-  const onSubmit = async (v: HabitFormValues) => {
-    const payload = {
-      ...v,
-      emoji,
-      user_id: user,
-      id: generateUniqueId(),
-    } as any;   //payload
-
-    if (onSubmitProp) {
-      onSubmitProp(payload);
-    } else if (defaultValues?.id) {
-      updateHabit({ ...payload, id: defaultValues.id } as any); //local update
-      await updatewhabitaction({ ...payload, id: defaultValues.id }); //db update
-    } else {
-      addHabit(payload);  //local add
-      await newhabitaction(payload); //db add
+  const handleFormSubmit = async (values: HabitFormValues) => {
+    // If external onSubmit is passed (from Dashboard), use it
+    if (onSubmit) {
+      onSubmit({ ...values, emoji });
+      setOpen(false);
+      return;
     }
 
+    // Otherwise, default behavior
+    if (!user) return console.warn("No user found — habit not saved");
+
+    const id = values.id ?? generateUniqueId();
+    const payload = {
+      id,
+      name: values.name,
+      description: values.description ?? null,
+      emoji: emoji ?? null,
+      frequency: values.frequency,
+      user_id: user,
+      createdAt: new Date(),
+      highestStreak: 0,
+      checkInDays: [],
+    };
+
+    addHabit(payload);
+    await newhabitaction(payload);
+
+    reset();
+    setEmoji("✅");
     setOpen(false);
   };
-
 
   const formBody = (
     <motion.form
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(handleFormSubmit)}
       className="space-y-4"
     >
       <div className="flex items-center gap-3">
@@ -101,13 +119,13 @@ export default function HabitForm({
             <button
               type="button"
               className="text-3xl leading-none"
-              aria-label="pick emoji"
+              aria-label="Pick emoji"
             >
               {emoji}
             </button>
           </PopoverTrigger>
           <PopoverContent className="p-0 border-none shadow-xl">
-            {/* @ts-ignore - emoji-mart doesn't ship types here */}
+            {/* @ts-ignore */}
             <Picker
               data={data}
               onEmojiSelect={(e: any) => setEmoji(e.native)}
@@ -147,11 +165,8 @@ export default function HabitForm({
         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          {submitLabel ?? (defaultValues?.id ? "Save" : "Add")}
+        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+          {submitLabel}
         </Button>
       </div>
     </motion.form>
@@ -163,9 +178,7 @@ export default function HabitForm({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              {defaultValues?.id ? "Edit Habit" : "New Habit"}
-            </DialogTitle>
+            <DialogTitle>{defaultValues ? "Edit Habit" : "New Habit"}</DialogTitle>
             <DialogDescription>
               Track consistency with a clear setup.
             </DialogDescription>

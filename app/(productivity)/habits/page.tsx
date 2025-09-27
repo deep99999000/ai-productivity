@@ -1,4 +1,4 @@
-import HabitsDashboard from '@/features/habits/components/HabitsDashboard'
+import HabitsDashboard from '@/features/habits/main/HabitsDashboard'
 import { getuser } from '@/lib/actions/getuser'
 
 const HabitsPage = async () => {

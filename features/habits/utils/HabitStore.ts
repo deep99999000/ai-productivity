@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Habit, NewHabit } from "@/features/habits/habitSchema";
+import type { Habit, NewHabit } from "@/features/habits/utils/habitSchema";
 import { formatISO, subDays } from "date-fns";
 
 // Zustand store type definition
