@@ -33,7 +33,7 @@ export const SingleTodo = ({ todo }: { todo: Todo }) => {
   } = todo;
 
   // Toggle todo status
-  const handleToggle = async () => {
+   const handleToggle = async () => {
     toggleTodo(id);
     await updateTodosStatus(user_id, id, !isDone);
   };
