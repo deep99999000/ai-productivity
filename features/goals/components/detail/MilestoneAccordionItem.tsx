@@ -14,7 +14,10 @@ import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import type { Todo } from "@/features/todo/todoSchema";
 import ProgressBar from "./ProgressBar";
 import { useTodo } from "@/features/todo/todostore";
-import { deleteTodoFromdb, updateTodosStatus } from "@/features/todo/todoaction";
+import {
+  deleteTodoFromdb,
+  updateTodosStatus,
+} from "@/features/todo/todoaction";
 import useUser from "@/store/useUser";
 import NewTodoDialog from "@/features/todo/components/NewTodo";
 import EditSubgoalDialog from "@/features/subGoals/components/EditSubgoalDialog";
@@ -41,34 +44,35 @@ const MilestoneAccordionItem = ({
 
   const { todos: t, toggleTodo, deleteTodo } = useTodo();
   const todos = t.filter((todo) => todo.subgoal_id === subgoal.id);
-  const { deleteSubgoal,updateSubgoalStatus} = useSubgoal();
-  
+  const { deleteSubgoal, updateSubgoalStatus } = useSubgoal();
+
   const completed = todos.filter((t) => t.isDone).length;
   const total = todos.length;
   const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
-  
+
   const statusBadge = () => {
     if (percent === 100)
       return { label: "Done", className: "bg-teal-100 text-teal-700" };
-    if (percent === 0)
-      return { label: "Not Started", className: "bg-red-100 text-red-700" };
-      return { label: "In Progress", className: "bg-yellow-100 text-yellow-800" };
+    if (percent != 0 || todos.length != 0)
+      return {
+        label: "In Progress",
+        className: "bg-yellow-100 text-yellow-800",
+      };
+    return { label: "Not Started", className: "bg-red-100 text-red-700" };
   };
-  useEffect(() => {
-    if (percent === 100 && subgoal.status.toLowerCase() !== "completed") {
-      updateSubgoalStatus(subgoal.id, "Completed");
-    } else if (percent === 0) {
-      updateSubgoalStatus(subgoal.id, "not_started");
-    } else  {
-      updateSubgoalStatus(subgoal.id, "in_progress");
-    }
-    console.log(subgoal.status);
-    
-  }, [percent])
-  
 
   const { user } = useUser();
   const badge = statusBadge();
+  useEffect(() => {
+    if (percent === 100) {
+      updateSubgoalStatus(subgoal.id, "completed");
+    } else if (percent != 0 || todos.length != 0) {
+      updateSubgoalStatus(subgoal.id, "in_progress");
+    } else {
+      updateSubgoalStatus(subgoal.id, "not_started");
+    }
+    console.log(subgoal.status);
+  }, [percent]);
 
   const handleToggle = async (id: number, isDone: boolean) => {
     toggleTodo(id);
@@ -77,8 +81,8 @@ const MilestoneAccordionItem = ({
 
   const deletesubgoalfunc = async () => {
     deleteSubgoal(subgoal.id);
-   await DeleteSubGoalsAction(subgoal.id);
-  }
+    await DeleteSubGoalsAction(subgoal.id);
+  };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
@@ -157,7 +161,10 @@ const MilestoneAccordionItem = ({
               {completed} / {total} tasks
             </span>
             <div className="flex flex-wrap gap-2">
-              <GenerateTasksWithAIDialog subgoalId={subgoal.id} subgoalName={subgoal.name} />
+              <GenerateTasksWithAIDialog
+                subgoalId={subgoal.id}
+                subgoalName={subgoal.name}
+              />
               {/* New Task */}
               <button
                 onClick={() => setIsnew(true)}

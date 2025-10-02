@@ -10,7 +10,7 @@ import { getaallsubgoal, toggleGoal } from "@/features/goals/goalaction";
 import type { Goal } from "@/features/goals/goalSchema";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import type { Todo } from "@/features/todo/todoSchema";
-import { ChevronLeft, CalendarDays,Pencil, PlusCircle } from "lucide-react";
+import { ChevronLeft, CalendarDays, Pencil, PlusCircle } from "lucide-react";
 import LoadingGoal from "@/features/goals/components/singlegoal/LoadingGoal";
 
 import Timeline from "@/features/goals/components/detail/Timeline";
@@ -31,7 +31,11 @@ const formatDate = (date?: string | Date | null) => {
   try {
     const d = typeof date === "string" ? new Date(date) : date;
     if (isNaN(d.getTime())) return "—";
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   } catch {
     return "—";
   }
@@ -50,7 +54,9 @@ const computeWeeklyVelocity = (todos: Todo[], goalId: number) => {
   const weeks: number[] = [0, 0, 0, 0];
   goalTodos.forEach((t) => {
     const ref = (t.endDate as Date) || (t.startDate as Date) || now;
-    const diffWeeks = Math.floor((now.getTime() - new Date(ref).getTime()) / (7 * 24 * 60 * 60 * 1000));
+    const diffWeeks = Math.floor(
+      (now.getTime() - new Date(ref).getTime()) / (7 * 24 * 60 * 60 * 1000)
+    );
     if (diffWeeks >= 0 && diffWeeks < 4) {
       weeks[3 - diffWeeks] += 1;
     }
@@ -71,24 +77,37 @@ const GoalDetailPage = () => {
   ]);
 
   const goalSubgoals = useMemo(
-    () => subgoals.filter((sg): sg is Subgoal => sg.goal_id === goalId).map((sg) => ({ ...sg, description: sg.description || "" })),
+    () =>
+      subgoals
+        .filter((sg): sg is Subgoal => sg.goal_id === goalId)
+        .map((sg) => ({ ...sg, description: sg.description || "" })),
     [subgoals, goalId]
   );
-const { todos:t} = useTodo();
+  const { todos: t } = useTodo();
 
-  const goalTodos = t
+  const goalTodos = t;
 
   const subgoalProgress = goalSubgoals.map((sg) => {
     const sgTodos = goalTodos.filter((t) => t.subgoal_id === sg.id);
     const done = sgTodos.filter((t) => t.isDone).length;
     const total = sgTodos.length;
-    const percent = total > 0 ? (done / total) * 100 : subgoalStatusValue(sg.status) * 100;
+    const percent =
+      total > 0 ? (done / total) * 100 : subgoalStatusValue(sg.status) * 100;
     return { id: sg.id, percent, done, total };
   });
 
-  const completedCount = subgoalProgress.filter((p) => p.percent === 100).length;
+  const completedCount = subgoalProgress.filter(
+    (p) => p.percent === 100
+  ).length;
   const totalMilestones = goalSubgoals.length;
-  const overallProgress = totalMilestones > 0 ? Math.round((subgoalProgress.reduce((a, b) => a + b.percent, 0) / (100 * totalMilestones)) * 100) : 0;
+  const overallProgress =
+    totalMilestones > 0
+      ? Math.round(
+          (subgoalProgress.reduce((a, b) => a + b.percent, 0) /
+            (100 * totalMilestones)) *
+            100
+        )
+      : 0;
 
   useEffect(() => {
     const currentGoal = allGoals.find((g) => g.id === goalId) || null;
@@ -116,14 +135,21 @@ const { todos:t} = useTodo();
   const scheduleInsight: { alert?: string; estimate?: string } = {};
   if (endDate) {
     const totalDuration = endDate.getTime() - today.getTime();
-    const remainingDays = Math.max(0, Math.round(totalDuration / (1000 * 60 * 60 * 24)));
+    const remainingDays = Math.max(
+      0,
+      Math.round(totalDuration / (1000 * 60 * 60 * 24))
+    );
     if (overallProgress < 50 && remainingDays < 10) {
       scheduleInsight.alert = `Progress behind: ${overallProgress}% with ${remainingDays} days left.`;
     }
-    scheduleInsight.estimate = `Estimated completion ${(overallProgress >= 100 ? "Completed" : endDate.toLocaleDateString())}`;
+    scheduleInsight.estimate = `Estimated completion ${
+      overallProgress >= 100 ? "Completed" : endDate.toLocaleDateString()
+    }`;
   }
 
-  const backlog = goalTodos
+  const backlogs = goalTodos.filter(
+    (t) => !t.isDone && (!t.startDate || t.startDate === null)
+  );
   const inProgress = goalTodos.filter((t) => !t.isDone && t.startDate);
   const done = goalTodos.filter((t) => t.isDone);
 
@@ -137,37 +163,61 @@ const { todos:t} = useTodo();
         <div className="w-full max-w-7xl mx-auto space-y-8">
           <div className="flex flex-wrap justify-between items-start gap-4">
             <div className="flex items-start gap-4">
-              <Link href="/goals" className="text-gray-500 hover:text-indigo-600 transition-colors mt-1" aria-label="Back to Goals">
+              <Link
+                href="/goals"
+                className="text-gray-500 hover:text-indigo-600 transition-colors mt-1"
+                aria-label="Back to Goals"
+              >
                 <ChevronLeft className="w-6 h-6" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{singleGoal.name}</h1>
-                <p className="text-gray-500 mt-1 max-w-2xl whitespace-pre-wrap">{singleGoal.description || "No description provided."}</p>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {singleGoal.name}
+                </h1>
+                <p className="text-gray-500 mt-1 max-w-2xl whitespace-pre-wrap">
+                  {singleGoal.description || "No description provided."}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <button className="flex items-center bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 text-sm"><Pencil className="w-4 h-4 mr-2" /> Edit Goal</button>
-              <button className="flex items-center bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 text-sm"><PlusCircle className="w-4 h-4 mr-2" /> Add Milestone</button>
-              <button className="flex items-center bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 text-sm"><PlusCircle className="w-4 h-4 mr-2" /> Add Task</button>
+              <button className="flex items-center bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 text-sm">
+                <Pencil className="w-4 h-4 mr-2" /> Edit Goal
+              </button>
+              <button className="flex items-center bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 text-sm">
+                <PlusCircle className="w-4 h-4 mr-2" /> Add Milestone
+              </button>
+              <button className="flex items-center bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 text-sm">
+                <PlusCircle className="w-4 h-4 mr-2" /> Add Task
+              </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               {/* Milestones */}
-              <MilestonesSection subgoals={goalSubgoals} goalTodos={goalTodos} goalId={goalId} />
+              <MilestonesSection
+                subgoals={goalSubgoals}
+                goalTodos={goalTodos}
+                goalId={goalId}
+              />
 
               {/* Timeline */}
               <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/80">
                 <div className="flex items-center mb-4">
                   <CalendarDays className="text-indigo-500 mr-3 w-6 h-6" />
-                  <h2 className="text-xl font-bold text-gray-900">Project Timeline / Roadmap</h2>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Project Timeline / Roadmap
+                  </h2>
                 </div>
                 <Timeline subgoals={goalSubgoals} todos={goalTodos} />
               </div>
 
               {/* Tasks Kanban */}
-              <TasksKanban backlog={backlog} inProgress={inProgress} done={done} />
+              <TasksKanban
+                backlog={backlogs}
+                inProgress={inProgress}
+                done={done}
+              />
 
               {/* Attachments */}
               <AttachmentsSection />
@@ -178,8 +228,17 @@ const { todos:t} = useTodo();
 
             <div className="space-y-8">
               <GoalSettingsCard />
-              <OverallProgressCard overallProgress={overallProgress} endDate={singleGoal.endDate} completedCount={completedCount} totalMilestones={totalMilestones} formatDate={formatDate} />
-              <AIInsightsCard alert={scheduleInsight.alert} estimate={scheduleInsight.estimate} />
+              <OverallProgressCard
+                overallProgress={overallProgress}
+                endDate={singleGoal.endDate}
+                completedCount={completedCount}
+                totalMilestones={totalMilestones}
+                formatDate={formatDate}
+              />
+              <AIInsightsCard
+                alert={scheduleInsight.alert}
+                estimate={scheduleInsight.estimate}
+              />
               <TeamMembersCard />
               <AnalyticsCard weeklyVelocity={weeklyVelocity} />
               <MotivationFocusCard overallProgress={overallProgress} />
