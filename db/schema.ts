@@ -4,6 +4,7 @@ import {goalTable} from "@/features/goals/goalSchema"
 import {subgoalTable} from "@/features/subGoals/subGoalschema"
 import {habitTable} from "@/features/habits/utils/habitSchema"
 import { messagesTable } from "./schema/chat";
+import { attachmentTable } from "@/features/attachment/attachmentSchema";
 
 
 export {
@@ -12,5 +13,6 @@ export {
   goalTable,
   subgoalTable,
   messagesTable,
-  habitTable
+  habitTable,
+  attachmentTable
 }

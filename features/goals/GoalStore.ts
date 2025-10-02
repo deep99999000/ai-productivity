@@ -11,7 +11,7 @@ export type GoalStore = {
   clearGoals: () => void;
   getGoalByIndex: (index: number) => Goal | undefined;
   updateGoalStatus: (goalId: number, status: Goal["status"]) => void;
-  editGoal: (updatedGoal: Goal) => void; // <-- Added
+  editGoal: (updatedGoal: Goal) => void;
 };
 
 export const useGoal = create<GoalStore>()(
@@ -51,7 +51,6 @@ export const useGoal = create<GoalStore>()(
           ),
         })),
 
-      // Add editGoal implementation
       editGoal: (updatedGoal) =>
         set((state) => ({
           allGoals: state.allGoals.map((goal) =>

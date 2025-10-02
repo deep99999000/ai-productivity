@@ -30,16 +30,16 @@ const Timeline = ({ subgoals, todos, max = 5 }: TimelineProps) => {
     <div className="relative pt-10 pb-4">
       <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-gray-200" />
       <div className="flex justify-between items-start text-center">
-        {subgoals.slice(0, max).map((sg) => {
+        {subgoals.slice(0, max).reverse().map((sg) => {
           const sgTodos = todos.filter((t) => t.subgoal_id === sg.id);
             const done = sgTodos.filter((t) => t.isDone).length;
             const total = sgTodos.length;
             const percent = total > 0 ? done / total : subgoalStatusValue(sg.status);
-            const state = percent >= 1 ? "done" : percent > 0 ? "progress" : "pending";
-            const color = state === "done" ? "teal" : state === "progress" ? "blue" : "gray";
+            const state = sg.status
+            const color = state === "completed" ? "teal" : state === "in_progress" ? "blue" : "gray";
           return (
             <div key={sg.id} className="relative w-full">
-              <div className={cn("w-8 h-8 rounded-full mx-auto flex items-center justify-center ring-4", color === "teal" && "bg-teal-500 ring-teal-100", color === "blue" && "bg-blue-500 ring-blue-100 animate-pulse", color === "gray" && "bg-gray-300 ring-gray-100")}>{state === "done" ? <CheckCircle2 className="w-5 h-5 text-white" /> : state === "progress" ? <AlertTriangle className="w-5 h-5 text-white" /> : null}</div>
+              <div className={cn("w-8 h-8 rounded-full mx-auto flex items-center justify-center ring-4", color === "teal" && "bg-teal-500 ring-teal-100", color === "blue" && "bg-blue-500 ring-blue-100 animate-pulse", color === "gray" && "bg-gray-300 ring-gray-100")}>{state === "completed" ? <CheckCircle2 className="w-5 h-5 text-white" /> : state === "in_progress" ? <AlertTriangle className="w-5 h-5 text-white" /> : null}</div>
               <p className={cn("text-sm font-semibold mt-2", state === "progress" && "text-red-600")}>{sg.name.length > 16 ? sg.name.slice(0, 16) + "…" : sg.name}</p>
               <p className="text-xs text-gray-500">{formatDate(sg.endDate as any)}</p>
             </div>
