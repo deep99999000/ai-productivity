@@ -79,11 +79,11 @@ export const updatetodoData = async (todo: Todo) => {
 
 // add new todo
 export const newtodoaction = async (todo: NewTodo) => {
-  const { name, description, category, priority, user_id,startDate,endDate,subgoal_id } = todo;
+
   try {
     const newTodos = await db
       .insert(todoTable)
-      .values({ name, description, category, priority, user_id,startDate,endDate,subgoal_id })
+      .values(todo)
       .returning();
     return newTodos;
   } catch (error) {

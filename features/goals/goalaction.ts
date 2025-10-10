@@ -132,30 +132,27 @@ export const toggleSubgoal = async (subgoalId: number, status: string) => {
 //delete subgoal
 export const DeleteSubGoalsAction = async (id: number) => {
   try {
-    // 1. Find all todos linked to this subgoal
-    const todos = await db
-      .select({ id: todoTable.id })
-      .from(todoTable)
-      .where(eq(todoTable.subgoal_id, id));
+    // 1. First, delete all todos linked to this subgoal
+    const deletedTodos = await db
+      .delete(todoTable)
+      .where(eq(todoTable.subgoal_id, id))
+      .returning();
 
-    const todoIds = todos.map(todo => todo.id);
+    console.log(`Deleted ${deletedTodos.length} todos associated with subgoal ${id}`);
 
-    if (todoIds.length > 0) {
-      // 2. Delete all todos linked to this subgoal
-      await db
-        .delete(todoTable)
-        .where(inArray(todoTable.subgoal_id, todoIds));
-    }
-
-    // 3. Delete the subgoal
+    // 2. Then delete the subgoal
     const deletedSubgoal = await db
       .delete(subgoalTable)
       .where(eq(subgoalTable.id, id))
       .returning();
 
-    return deletedSubgoal;
+    return {
+      deletedSubgoal,
+      deletedTodos,
+      todoCount: deletedTodos.length
+    };
   } catch (error) {
-    console.error(error);
+    console.error("Error deleting subgoal and associated todos:", error);
     throw error;
   }
 };

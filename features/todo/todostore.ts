@@ -8,6 +8,7 @@ interface TodoState {
   addTodo: (newTodo: NewTodo, user_id: number) => void;
   updateTodo: (updatedTodo: Todo) => void;
   deleteTodo: (id: number) => void;
+  deleteTodosBySubgoal: (subgoalId: number) => void;
   toggleTodo: (id: number) => void;
 }
 
@@ -38,6 +39,11 @@ export const useTodo = create<TodoState>()(
       deleteTodo: (id) =>
         set((state) => ({
           todos: state.todos.filter((todo) => todo.id !== id),
+        })),
+
+      deleteTodosBySubgoal: (subgoalId) =>
+        set((state) => ({
+          todos: state.todos.filter((todo) => todo.subgoal_id !== subgoalId),
         })),
 
       toggleTodo: (id) =>

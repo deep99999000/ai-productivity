@@ -13,8 +13,7 @@ export default function GoalQuickStats({
   completedGoals,
 }: GoalQuickStatsProps) {
   const successRate =
-    totalGoals > 0
-      ? `${Math.round((completedGoals / totalGoals) * 100)}%`
+    totalGoals > 0      ? `${Math.round((completedGoals / totalGoals) * 100)}%`
       : "0%";
 
   return (

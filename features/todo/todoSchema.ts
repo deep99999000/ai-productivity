@@ -24,9 +24,9 @@ export const todoTable = pgTable("todotable", {
   startDate: timestamp("start_date", { mode: "date" }),
   endDate: timestamp("end_date", { mode: "date" }),
 
-  // Foreign keys
-  goal_id:  bigint("goal_id", { mode: "number" }).references(() => goalTable.id),
-  subgoal_id:  bigint("subgoal_id", { mode: "number" }).references(() => subgoalTable.id),
+  // Foreign keys with cascade deletion
+  goal_id:  bigint("goal_id", { mode: "number" }).references(() => goalTable.id, { onDelete: "cascade" }),
+  subgoal_id:  bigint("subgoal_id", { mode: "number" }).references(() => subgoalTable.id, { onDelete: "cascade" }),
 });
 
 // types

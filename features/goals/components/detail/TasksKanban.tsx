@@ -15,17 +15,19 @@ interface ColumnProps {
   accent: string;
   count: number;
   onDropTask: (column: ColumnKey, todoId: number) => void;
+  onDragEnter: (columnKey: ColumnKey) => void;
   isOver: boolean;
   children: React.ReactNode;
 }
 
-const Column = ({ title, accent, count, children, onDropTask, columnKey, isOver }: ColumnProps) => {
+const Column = ({ title, accent, count, children, onDropTask, columnKey, isOver, onDragEnter }: ColumnProps) => {
   return (
     <div
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
       }}
+      onDragEnter={() => onDragEnter(columnKey)}
       onDrop={(e) => {
         e.preventDefault();
         const idStr = e.dataTransfer.getData("text/task-id");
@@ -224,8 +226,9 @@ const TasksKanban = ({ backlog, inProgress, done }: TasksKanbanProps) => {
     setDropTarget(null);
   };
 
-  // Optional: add drag enter for better UX (not used in drop logic, but for visuals)
-  // You can attach onDragEnter to Column if needed, but not required
+  const onDragEnter = (columnKey: ColumnKey) => {
+    setDropTarget(columnKey);
+  };
 
   return (
     <div className="bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-md border border-gray-200/60">
@@ -248,6 +251,7 @@ const TasksKanban = ({ backlog, inProgress, done }: TasksKanbanProps) => {
           accent="from-gray-50 to-gray-100/70"
           count={backlog.length}
           onDropTask={handleDrop}
+          onDragEnter={onDragEnter}
           isOver={dropTarget === "backlog"}
         >
           {backlog.length === 0 ? (
@@ -272,6 +276,7 @@ const TasksKanban = ({ backlog, inProgress, done }: TasksKanbanProps) => {
           accent="from-blue-50 to-indigo-50/70"
           count={inProgress.length}
           onDropTask={handleDrop}
+          onDragEnter={onDragEnter}
           isOver={dropTarget === "inProgress"}
         >
           {inProgress.length === 0 ? (
@@ -296,6 +301,7 @@ const TasksKanban = ({ backlog, inProgress, done }: TasksKanbanProps) => {
           accent="from-teal-50 to-emerald-50/70"
           count={done.length}
           onDropTask={handleDrop}
+          onDragEnter={onDragEnter}
           isOver={dropTarget === "done"}
         >
           {done.length === 0 ? (
