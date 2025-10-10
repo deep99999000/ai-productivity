@@ -1,7 +1,7 @@
 // components/GeneratedTaskCard.tsx
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Calendar } from "lucide-react";
+import { Edit, Trash2, Plus, Calendar, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { GeneratedTask } from "./GenerateTasksWithAIDialog"; // Adjust path if needed
@@ -31,31 +31,57 @@ export default function GeneratedTaskCard({
     setIsEditing(false);
   };
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high": return "text-red-600 border-red-300 bg-red-50";
+      case "medium": return "text-yellow-600 border-yellow-300 bg-yellow-50";
+      case "low": return "text-green-600 border-green-300 bg-green-50";
+      default: return "text-gray-600 border-gray-300 bg-gray-50";
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      const today = new Date();
+      const diffTime = date.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "Tomorrow";
+      if (diffDays > 0 && diffDays <= 7) return `In ${diffDays} days`;
+      
+      return date.toLocaleDateString();
+    } catch {
+      return "Invalid date";
+    }
+  };
+
   return (
-    <Card className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow transition-shadow duration-200">
-      <div className="flex flex-col gap-2">
-        {/* Title */}
-        <div className="flex items-start justify-between">
+    <Card className="p-4 border border-gray-200 rounded-lg bg-white hover:border-blue-300 transition-colors">
+      <div className="space-y-3">
+        {/* Title and Actions */}
+        <div className="flex items-start justify-between gap-3">
           {isEditing ? (
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="font-semibold text-sm md:text-base bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none flex-1"
+              className="font-medium text-gray-900 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none flex-1"
               autoFocus
             />
           ) : (
-            <h4 className="font-semibold text-sm md:text-base text-gray-900 truncate">
+            <h4 className="font-medium text-gray-900 leading-snug flex-1">
               {name}
             </h4>
           )}
 
-          <div className="flex-shrink-0 flex gap-1">
+          <div className="flex gap-1">
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+              size="sm"
+              className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
               onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
             >
               <Edit className="w-4 h-4" />
@@ -63,8 +89,8 @@ export default function GeneratedTaskCard({
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+              size="sm"
+              className="h-8 w-8 p-0 text-gray-500 hover:text-red-600"
               onClick={() => onRemove(task.tempId)}
             >
               <Trash2 className="w-4 h-4" />
@@ -73,50 +99,70 @@ export default function GeneratedTaskCard({
         </div>
 
         {/* Description */}
-        {isEditing ? (
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="text-xs text-gray-600 bg-transparent border-b border-dashed border-gray-300 focus:border-blue-500 outline-none resize-none h-16"
-            placeholder="Describe this task..."
-          />
-        ) : (
-          <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
-            {description}
-          </p>
+        {(description || isEditing) && (
+          <div>
+            {isEditing ? (
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full text-sm text-gray-600 border border-gray-300 rounded p-2 focus:border-blue-500 outline-none resize-none h-16"
+                placeholder="Add task description..."
+              />
+            ) : (
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {description}
+              </p>
+            )}
+          </div>
         )}
 
-        {/* Metadata */}
-        <div className="flex items-center gap-2 mt-1">
-          <Badge
-            variant="outline"
-            className={`text-xs px-2 py-1 ${
-              priority === "high"
-                ? "text-red-600 border-red-300"
-                : priority === "medium"
-                ? "text-yellow-600 border-yellow-300"
-                : "text-green-600 border-green-300"
-            }`}
-          >
-            {priority.charAt(0).toUpperCase() + priority.slice(1)}
-          </Badge>
-          <Badge variant="secondary" className="px-2 py-1 text-xs flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-blue-500" />
-            <span>{new Date(task.endDate).toLocaleDateString()}</span>
-          </Badge>
+        {/* Priority and Date */}
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as "low" | "medium" | "high")}
+                className="text-sm px-2 py-1 border border-gray-300 rounded focus:border-blue-500 outline-none"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            ) : (
+              <Badge
+                variant="outline"
+                className={`text-xs ${getPriorityColor(priority)}`}
+              >
+                {priority.charAt(0).toUpperCase() + priority.slice(1)}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            {task.startDate && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                Start: {formatDate(task.startDate)}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              Due: {formatDate(task.endDate)}
+            </span>
+          </div>
         </div>
 
         {/* Save Button */}
-        <div className="pt-1">
-          <Button
-            type="button"
-            size="sm"
-            className="w-full bg-gradient-to-r from-blue-500 via-purple-600 to-blue-500 hover:shadow-[0_0_15px_2px_rgba(147,51,234,0.2)] transition-all duration-300 text-white text-xs font-medium"
-            onClick={() => onSave({ ...task, name, description, priority })}
-          >
-            <Plus className="w-3 h-3 mr-1.5" /> Save Task
-          </Button>
-        </div>
+        <Button
+          type="button"
+          size="sm"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => onSave({ ...task, name, description, priority })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Task
+        </Button>
       </div>
     </Card>
   );

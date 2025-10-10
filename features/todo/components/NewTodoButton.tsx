@@ -5,11 +5,12 @@ import { Plus } from "lucide-react";
 import React from "react";
 
 type NewTaskButtonProps = {
-  subgoal_id: number;
+  subgoal_id?: number;
+  goal_id?: number;
   children?: React.ReactNode;
 };
 
-const NewTaskButton = ({ subgoal_id, children }: NewTaskButtonProps) => {
+const NewTaskButton = ({ subgoal_id, goal_id, children }: NewTaskButtonProps) => {
   const { open, isOpen, close } = useDialog();
 
   return (
@@ -36,6 +37,7 @@ const NewTaskButton = ({ subgoal_id, children }: NewTaskButtonProps) => {
         isOpen={isOpen}
         setIsOpen={close}
         defaultSubgoalId={subgoal_id}
+        defaultgoalId={goal_id}
       />
     </>
   );

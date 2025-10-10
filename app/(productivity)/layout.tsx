@@ -37,7 +37,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const pathname = usePathname();
 
   return (
@@ -66,11 +66,11 @@ export default function DashboardLayout({
             </div>
           )}
           {collapsed && (
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center shadow-md mx-auto">
+            <div onClick={() => setCollapsed(false)}  className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center shadow-md mx-auto">
               <Brain className="w-5 h-5 text-white" />
             </div>
           )}
-          <Button
+   {!collapsed &&        <Button
             size="icon"
             variant="ghost"
             className="h-9 w-9 hover:bg-slate-100 rounded-full ml-auto"
@@ -82,7 +82,7 @@ export default function DashboardLayout({
             ) : (
               <ChevronLeft className="w-5 h-5" />
             )}
-          </Button>
+          </Button>}
         </div>
 
         {/* Navigation */}

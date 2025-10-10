@@ -20,9 +20,10 @@ interface NewTodoDialogProps {
   setIsOpen: (open: boolean) => void;
 
   defaultSubgoalId?: number | null;
+  defaultgoalId?: number | null;
 }
 
-export default function NewTodoDialog({ isOpen, setIsOpen,defaultSubgoalId = null  }: NewTodoDialogProps) {
+export default function NewTodoDialog({ isOpen, setIsOpen,defaultSubgoalId = null,defaultgoalId = null  }: NewTodoDialogProps) {
   const userId = useUser((s) => s.user);
   const { addTodo } = useTodo();
 
@@ -40,7 +41,7 @@ export default function NewTodoDialog({ isOpen, setIsOpen,defaultSubgoalId = nul
       description: "",
       startDate: null,
       endDate: null,
-      goal_id: null,
+      goal_id: defaultgoalId,
       subgoal_id: defaultSubgoalId,
     },
   });
@@ -48,7 +49,7 @@ export default function NewTodoDialog({ isOpen, setIsOpen,defaultSubgoalId = nul
   // Form Submit Handler
   const onSubmit = async (data: NewTodo) => {
     console.log("data",data);
-    
+   
     addTodo(data, userId ?? 0);
     reset();
     setIsOpen(false);
