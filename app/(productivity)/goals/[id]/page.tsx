@@ -1,36 +1,40 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useGoal } from "@/features/goals/GoalStore";
+import { useGoal } from "@/features/goals/store/GoalStore";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
 import { useTodo } from "@/features/todo/todostore";
-import { getaallsubgoal, toggleGoal } from "@/features/goals/goalaction";
-import type { Goal } from "@/features/goals/goalSchema";
+import { getaallsubgoal, toggleGoal } from "@/features/goals/actions/goalaction";
+import type { Goal } from "@/features/goals/types/goalSchema";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
-import type { Todo } from "@/features/todo/todoSchema";
 import { ChevronLeft, CalendarDays, Pencil, PlusCircle } from "lucide-react";
 import LoadingGoal from "@/features/goals/components/singlegoal/LoadingGoal";
 import NewTaskButton from "@/features/todo/components/NewTodoButton";
 
 // New refined components
-import { GoalViewTabs } from "@/features/goals/components/detail/GoalViewTabs";
-import { FocusModeToggle, type FocusMode } from "@/features/goals/components/detail/FocusModeToggle";
-import { MomentumTracker } from "@/features/goals/components/detail/MomentumTracker";
-import { AnalyticsCharts } from "@/features/goals/components/detail/AnalyticsCharts";
-import { TaskFilterBar, type TaskFilters } from "@/features/goals/components/detail/TaskFilterBar";
-import { EnhancedAIInsightsPanel } from "@/features/goals/components/detail/EnhancedAIInsightsPanel";
+import { 
+  GoalViewTabs, 
+  FocusModeToggle, 
+  MomentumTracker, 
+  AnalyticsCharts, 
+  TaskFilterBar 
+} from "@/features/goals/components/detail-view";
+import type { FocusMode, TaskFilters } from "@/features/goals/types";
+
+// Custom hooks
+import { useGoalMetrics, useTaskFiltering } from "@/features/goals/hooks";
 
 // Existing components
-import Timeline from "@/features/goals/components/detail/Timeline";
-import MilestonesSection from "@/features/goals/components/detail/MilestonesSection";
-import TasksKanban from "@/features/goals/components/detail/TasksKanban";
-import AttachmentsSection from "@/features/goals/components/detail/AttachmentsSection";
-import NotesSection from "@/features/goals/components/detail/NotesSection";
-import GoalSettingsCard from "@/features/goals/components/detail/GoalSettingsCard";
-import OverallProgressCard from "@/features/goals/components/detail/OverallProgressCard";
-import TeamMembersCard from "@/features/goals/components/detail/TeamMembersCard";
+import Timeline from "@/features/goals/components/detail-view/overview/Timeline";
+import MilestonesSection from "@/features/goals/components/detail-view/overview/MilestonesSection";
+import TasksKanban from "@/features/goals/components/detail-view/board/TasksKanban";
+import AttachmentsSection from "@/features/goals/components/detail-view/activity/AttachmentsSection";
+import NotesSection from "@/features/goals/components/detail-view/activity/NotesSection";
+import GoalSettingsCard from "@/features/goals/components/detail-view/shared/GoalSettingsCard";
+import OverallProgressCard from "@/features/goals/components/detail-view/overview/OverallProgressCard";
+import TeamMembersCard from "@/features/goals/components/detail-view/activity/TeamMembersCard";
 import GoalAISection from "@/features/goals/ai/GoalAISection";
 
 // Utility formatters
@@ -52,26 +56,11 @@ const subgoalStatusValue = (status: string) => {
   return 0;
 };
 
-const computeWeeklyVelocity = (todos: Todo[], goalId: number) => {
-  const goalTodos = todos.filter((t) => t.goal_id === goalId && t.isDone);
-  const now = new Date();
-  const weeks: number[] = [0, 0, 0, 0];
-  goalTodos.forEach((t) => {
-    const ref = (t.endDate as Date) || (t.startDate as Date) || now;
-    const diffWeeks = Math.floor((now.getTime() - new Date(ref).getTime()) / (7 * 24 * 60 * 60 * 1000));
-    if (diffWeeks >= 0 && diffWeeks < 4) {
-      weeks[3 - diffWeeks] += 1;
-    }
-  });
-  return weeks;
-};
-
 const GoalDetailPage = () => {
   const params = useParams();
   const goalId = Number(params?.id);
   const { allGoals, updateGoalStatus } = useGoal();
   const { subgoals, setSubgoals } = useSubgoal();
-  const { todos } = useTodo();
   const [singleGoal, setSingleGoal] = useState<Goal | null>(null);
 
   const [notes] = useState(() => [
@@ -85,6 +74,22 @@ const GoalDetailPage = () => {
 const { todos:t} = useTodo();
 
   const goalTodos = t.filter((td) => td.goal_id == goalId);
+
+  // New state management
+  const [focusMode, setFocusMode] = useState<FocusMode>("all");
+  const [taskFilters, setTaskFilters] = useState<TaskFilters>({
+    subgoalIds: [],
+    priorities: [],
+    deadlineRange: "all",
+  });
+
+  // Use custom hooks for better organization
+  const { momentumMetrics, focusCounts, analyticsMetrics } = useGoalMetrics(goalTodos, goalId);
+  const { filteredTasks, filteredBacklog, filteredInProgress, filteredDone } = useTaskFiltering(
+    goalTodos, 
+    focusMode, 
+    taskFilters
+  );
 
   const subgoalProgress = goalSubgoals.map((sg) => {
     const sgTodos = goalTodos.filter((t) => t.subgoal_id === sg.id);
@@ -130,152 +135,6 @@ const { todos:t} = useTodo();
     }
     scheduleInsight.estimate = `Estimated completion ${(overallProgress >= 100 ? "Completed" : endDate.toLocaleDateString())}`;
   }
-
-  const backlog = goalTodos.filter((t) => !t.isDone && !t.startDate);
-  const inProgress = goalTodos.filter((t) => !t.isDone && t.startDate);
-  const done = goalTodos.filter((t) => t.isDone);
-
-  const weeklyVelocity = computeWeeklyVelocity(todos, goalId);
-
-  // New state management
-  const [focusMode, setFocusMode] = useState<FocusMode>("all");
-  const [taskFilters, setTaskFilters] = useState<TaskFilters>({
-    subgoalIds: [],
-    priorities: [],
-    deadlineRange: "all",
-  });
-  const [aiInsights, setAiInsights] = useState<any[]>([]);
-
-  // Compute momentum metrics
-  const momentumMetrics = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-
-    const completedToday = goalTodos.filter(
-      (t) => t.isDone && t.endDate && new Date(t.endDate) >= today
-    ).length;
-
-    const completedThisWeek = goalTodos.filter(
-      (t) => t.isDone && t.endDate && new Date(t.endDate) >= weekAgo
-    ).length;
-
-    const recentWins = goalTodos
-      .filter((t) => t.isDone && t.endDate && new Date(t.endDate) >= weekAgo)
-      .slice(0, 3)
-      .map((t) => t.name);
-
-    return {
-      streak: 5, // TODO: Calculate actual streak
-      tasksCompletedToday: completedToday,
-      tasksCompletedThisWeek: completedThisWeek,
-      daysActive: 12, // TODO: Calculate from actual activity
-      recentWins,
-    };
-  }, [goalTodos]);
-
-  // Filter tasks based on focus mode and filters
-  const filteredTasks = useMemo(() => {
-    let filtered = [...goalTodos];
-
-    // Apply focus mode
-    if (focusMode === "today") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      filtered = filtered.filter((t) => {
-        if (!t.endDate) return false;
-        const taskDate = new Date(t.endDate);
-        taskDate.setHours(0, 0, 0, 0);
-        return taskDate.getTime() === today.getTime();
-      });
-    } else if (focusMode === "urgent") {
-      filtered = filtered.filter((t) => t.priority === "high" && !t.isDone);
-    } else if (focusMode === "active") {
-      filtered = filtered.filter((t) => !t.isDone && t.startDate);
-    }
-
-    // Apply advanced filters
-    if (taskFilters.subgoalIds.length > 0) {
-      filtered = filtered.filter((t) => taskFilters.subgoalIds.includes(t.subgoal_id || 0));
-    }
-
-    if (taskFilters.priorities.length > 0) {
-      filtered = filtered.filter((t) => taskFilters.priorities.includes(t.priority || ""));
-    }
-
-    if (taskFilters.deadlineRange !== "all") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      filtered = filtered.filter((t) => {
-        if (!t.endDate) return false;
-        const taskDate = new Date(t.endDate);
-
-        if (taskFilters.deadlineRange === "today") {
-          taskDate.setHours(0, 0, 0, 0);
-          return taskDate.getTime() === today.getTime();
-        } else if (taskFilters.deadlineRange === "week") {
-          const weekFromNow = new Date(today);
-          weekFromNow.setDate(weekFromNow.getDate() + 7);
-          return taskDate >= today && taskDate <= weekFromNow;
-        } else if (taskFilters.deadlineRange === "overdue") {
-          return taskDate < today && !t.isDone;
-        }
-        return true;
-      });
-    }
-
-    return filtered;
-  }, [goalTodos, focusMode, taskFilters]);
-
-  const filteredBacklog = filteredTasks.filter((t) => !t.isDone && !t.startDate);
-  const filteredInProgress = filteredTasks.filter((t) => !t.isDone && t.startDate);
-  const filteredDone = filteredTasks.filter((t) => t.isDone);
-
-  // Focus mode counts
-  const focusCounts = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return {
-      all: goalTodos.length,
-      today: goalTodos.filter((t) => {
-        if (!t.endDate) return false;
-        const taskDate = new Date(t.endDate);
-        taskDate.setHours(0, 0, 0, 0);
-        return taskDate.getTime() === today.getTime();
-      }).length,
-      urgent: goalTodos.filter((t) => t.priority === "high" && !t.isDone).length,
-      active: goalTodos.filter((t) => !t.isDone && t.startDate).length,
-    };
-  }, [goalTodos]);
-
-  // Analytics metrics
-  const analyticsMetrics = useMemo(() => {
-    const completed = goalTodos.filter((t) => t.isDone).length;
-    const total = goalTodos.length;
-
-    const today = new Date();
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-
-    const addedThisWeek = goalTodos.filter(
-      (t) => new Date(t.startDate || "") >= weekAgo
-    ).length;
-
-    const completedThisWeek = goalTodos.filter(
-      (t) => t.isDone && t.endDate && new Date(t.endDate) >= weekAgo
-    ).length;
-
-    return {
-      completedTasks: completed,
-      totalTasks: total,
-      weeklyVelocity,
-      addedThisWeek,
-      completedThisWeek,
-    };
-  }, [goalTodos, weeklyVelocity]);
 
   if (!singleGoal) return <LoadingGoal />;
 

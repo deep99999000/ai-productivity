@@ -1,8 +1,8 @@
 "use client";
 
-import type { Goal } from "@/features/goals/goalSchema";
+import type { Goal } from "@/features/goals/types/goalSchema";
 import { getuser } from "@/lib/actions/getuser";
-import { getAllUserGoals } from "@/features/goals/goalaction";
+import { getAllUserGoals } from '@/features/goals/actions/goalaction';
 
 export async function fetchUserGoals(): Promise<Goal[]> {
   const userId = await getuser();

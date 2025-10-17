@@ -7,7 +7,7 @@ import { Sparkles, FileText, X, Edit, Trash2, Plus, Calendar, Brain, Target, Tre
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { generateUniqueId } from "@/lib/generateUniqueId";
-import { newSubGoalsAction } from "@/features/goals/goalaction"; // Ensure this exists
+import { newSubGoalsAction } from "@/features/goals/actions/goalaction"; // Ensure this exists
  // Correct import
 import useUser from "@/store/useUser";
 import axios from "axios";

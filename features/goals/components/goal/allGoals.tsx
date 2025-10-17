@@ -1,6 +1,6 @@
 "use client";
-import type { Goal } from "@/features/goals/goalSchema";
-import { useGoal } from "@/features/goals/GoalStore";
+import type { Goal } from "@/features/goals/types/goalSchema";
+import { useGoal } from "@/features/goals/store/GoalStore";
 import { useEffect } from "react";
 import GoalEmptyState from "@/features/goals/components/goal/GoalEmptyState";
 import GoalHeader from "@/features/goals/components/goal/GoalHeader";

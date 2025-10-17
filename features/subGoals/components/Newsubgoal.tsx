@@ -7,7 +7,7 @@ import SelectComponent from "@/components/Selectcomponent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { newSubGoalsAction } from "@/features/goals/goalaction";
+import { newSubGoalsAction } from "@/features/goals/actions/goalaction";
 import type { NewSubgoal } from "@/features/subGoals/subGoalschema";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
 import { useTodo } from "@/features/todo/todostore";

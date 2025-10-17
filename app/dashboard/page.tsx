@@ -8,9 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { motion } from "motion/react";
 import { ListTodo, CheckCircle2, Target, Flame, BookText, Brain } from "lucide-react";
 import { useTodo } from "@/features/todo/todostore";
-import { useGoal } from "@/features/goals/GoalStore";
+import { useGoal } from "@/features/goals/store/GoalStore";
 import type { Todo } from "@/features/todo/todoSchema";
-import type { Goal } from "@/features/goals/goalSchema";
+import type { Goal } from "@/features/goals/types/goalSchema";
 
 // Extracted dashboard components
 import StatCard from "@/features/dashboard/components/StatCard";

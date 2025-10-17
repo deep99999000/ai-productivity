@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import type { Todo } from "@/features/todo/todoSchema";
-import ProgressBar from "./ProgressBar";
+import ProgressBar from "../../ui/ProgressBar";
 import { useTodo } from "@/features/todo/todostore";
 import {
   deleteTodoFromdb,
@@ -23,7 +23,7 @@ import NewTodoDialog from "@/features/todo/components/NewTodo";
 import EditSubgoalDialog from "@/features/subGoals/components/EditSubgoalDialog";
 import EditTodoDialog from "@/features/todo/components/EditTodoDialog";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
-import { DeleteSubGoalsAction } from "@/features/goals/goalaction";
+import { DeleteSubGoalsAction } from "@/features/goals/actions/goalaction";
 import GenerateTasksWithAIDialog from "@/features/todo/components/GenerateTasksWithAIDialog";
 
 interface MilestoneAccordionItemProps {

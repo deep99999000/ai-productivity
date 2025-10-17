@@ -1,7 +1,7 @@
 "use server"
 import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import {Goal, goalTable, type NewGoal} from "@/features/goals/goalSchema"
+import {Goal, goalTable, type NewGoal} from "@/features/goals/types/goalSchema"
 import { habitTable, subgoalTable, todoTable } from "@/db/schema";
 import type { NewSubgoal, Subgoal } from "@/features/subGoals/subGoalschema";
 import type { Habit } from "@/features/habits/utils/habitSchema";

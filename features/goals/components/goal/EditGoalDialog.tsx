@@ -15,9 +15,9 @@ import {
     Calendar,
     Target,
 } from "lucide-react";
-import { useGoal } from "@/features/goals/GoalStore";
-import type { Goal } from "@/features/goals/goalSchema";
-import { editGoalAction } from "@/features/goals/goalaction";
+import { useGoal } from "@/features/goals/store/GoalStore";
+import type { Goal } from "@/features/goals/types/goalSchema";
+import { editGoalAction } from "@/features/goals/actions/goalaction";
 
 interface EditGoalDialogProps {
     open: boolean;

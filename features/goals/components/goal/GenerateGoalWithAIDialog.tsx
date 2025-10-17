@@ -10,11 +10,11 @@ import { generateUniqueId } from "@/lib/generateUniqueId";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card"; // Make sure this exists
-import { NewGoal } from "@/features/goals/goalSchema"; // Ensure this imports $inferInsert
+import { NewGoal } from "@/features/goals/types/goalSchema"; // Ensure this imports $inferInsert
 import GeneratedGoalCard from "./GeneratedGoalCard";
 import useUser from "@/store/useUser";
-import { useGoal } from "@/features/goals/GoalStore";
-import { newGoalsAction } from "@/features/goals/goalaction";
+import { useGoal } from "@/features/goals/store/GoalStore";
+import { newGoalsAction } from "@/features/goals/actions/goalaction";
 import { API } from "@/lib/actions/getbackendurl";
 
 // Type for AI-generated goal (frontend only)

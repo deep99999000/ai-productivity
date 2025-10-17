@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Goal, NewGoal } from "@/features/goals/goalSchema";
+import type { Goal, NewGoal } from "@/features/goals/types/goalSchema";
 
 // Define the store type
 export type GoalStore = {

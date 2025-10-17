@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
-import { editGoalAction, editSubgoalAction } from "@/features/goals/goalaction";
+import { editGoalAction, editSubgoalAction } from "@/features/goals/actions/goalaction";
 import { da } from "date-fns/locale";
 
 
