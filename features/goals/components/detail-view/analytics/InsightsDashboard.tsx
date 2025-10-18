@@ -93,7 +93,7 @@ import type { Goal } from "@/features/goals/types/goalSchema";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import type { Todo } from "@/features/todo/todoSchema";
 import { mockAnalyticsData, type MockAnalyticsData } from "@/features/goals/data/mockAnalyticsData";
-import { EnhancedMetricCard } from "./EnhancedMetricCard";
+import { EnhancedMetricCard } from "./MetricCard";
 import { AnalyticsFloatingActions } from "./AnalyticsFloatingActions";
 
 interface EnhancedInsightsDashboardProps {

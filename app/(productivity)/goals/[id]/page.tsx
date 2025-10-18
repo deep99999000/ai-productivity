@@ -12,7 +12,7 @@ import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import { ChevronLeft, CalendarDays, Pencil, PlusCircle } from "lucide-react";
 import LoadingGoal from "@/features/goals/components/singlegoal/LoadingGoal";
 import NewTaskButton from "@/features/todo/components/NewTodoButton";
-import EnhancedInsightsDashboard from "@/features/goals/components/detail-view/analytics/EnhancedInsightsDashboard";
+import EnhancedInsightsDashboard from "@/features/goals/components/detail-view/analytics/InsightsDashboard";
 
 // New refined components
 import { 

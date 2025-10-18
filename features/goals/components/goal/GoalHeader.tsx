@@ -4,7 +4,6 @@ import { Sparkles, BookOpen, TrendingUp, Brain, Zap, GitBranch, BarChart, Target
 import GenerateGoalWithAIDialog from "@/features/goals/components/goal/GenerateGoalWithAIDialog";
 import GenerateGoalsWithAIDialog from "@/features/goals/components/goal/GenerateGoalWithAIDialog";
 import GoalTemplateLibrary from "@/features/goals/components/goal/GoalTemplateLibrary";
-import AdvancedAnalyticsDashboard from "@/features/goals/components/detail-view/analytics/AdvancedAnalyticsDashboard";
 import { Button } from "@/components/ui/button";
 import BaseDialog from "@/components/BaseDialog";
 import { useGoal } from "@/features/goals/store/GoalStore";
@@ -69,21 +68,7 @@ const GoalHeader = () => {
         setIsOpen={setIsTemplateLibraryOpen} 
       />
 
-      {/* Advanced Analytics Dashboard Dialog */}
-      <BaseDialog
-        isOpen={isAnalyticsOpen}
-        setisOpen={setIsAnalyticsOpen}
-        title=""
-        description=""
-      >
-        <div className="max-w-7xl mx-auto">
-          <AdvancedAnalyticsDashboard 
-            goals={allGoals}
-            subgoals={subgoals}
-            todos={todos}
-          />
-        </div>
-      </BaseDialog>
+     
     </div>
   );
 };
