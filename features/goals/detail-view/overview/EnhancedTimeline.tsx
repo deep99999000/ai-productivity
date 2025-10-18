@@ -9,6 +9,7 @@ import {
   Clock, 
   CheckCircle2, 
   AlertTriangle, 
+
   Target,
   TrendingUp,
   Activity
@@ -192,7 +193,7 @@ const EnhancedTimeline: React.FC<EnhancedTimelineProps> = ({ goal, subgoals, tod
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <TrendingUp className="w-6 h-6 text-indigo-600" />
-              Enhanced Progress Timeline
+               Progress Timeline
             </h3>
             <Badge className="bg-indigo-100 text-indigo-800 px-3 py-1">
               {progressStats.completionRate}% Complete

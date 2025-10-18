@@ -37,9 +37,9 @@ import TeamMembersCard from "@/features/goals/detail-view/activity/TeamMembersCa
 
 // Enhanced components
 import EnhancedTimeline from "@/features/goals/detail-view/overview/EnhancedTimeline";
-import GoalRelationshipManager from "@/features/goals/detail-view/shared/GoalRelationshipManager";
-import GoalAutomation from "@/features/goals/detail-view/shared/GoalAutomation";
 import SmartInsightsPanel from "@/features/goals/detail-view/overview/SmartInsightsPanel";
+// New: Real AI insights powered by /api/content/generate/goal
+import AIInsightsCard from "@/features/goals/ai/components/AIInsightsCard";
 
 // Utility formatters
 const formatDate = (date?: string | Date | null) => {
@@ -75,7 +75,7 @@ const GoalDetailPage = () => {
     () => subgoals.filter((sg): sg is Subgoal => sg.goal_id === goalId).map((sg) => ({ ...sg, description: sg.description || "" })),
     [subgoals, goalId]
   );
-const { todos:t} = useTodo();
+const { todos:t } = useTodo();
 
   const goalTodos = t.filter((td) => td.goal_id == goalId);
 
@@ -231,9 +231,6 @@ const { todos:t} = useTodo();
                       goalId={goalId}
                       goalName={singleGoal?.name}
                     />
-
-                    {/* Goal Relationships */}
-                    <GoalRelationshipManager currentGoal={singleGoal} />
                   </div>
 
                   {/* Right Column */}
@@ -241,17 +238,10 @@ const { todos:t} = useTodo();
                     <MomentumTracker {...momentumMetrics} />
                     
                     {/* Smart Insights Panel */}
-                    <SmartInsightsPanel 
-                      goal={singleGoal}
-                      subgoals={goalSubgoals}
-                      todos={goalTodos}
-                    />
+                  
 
-                    {/* Goal Automation Quick Access */}
-                    <GoalAutomation 
-                      goalId={goalId} 
-                      goalName={singleGoal?.name || "Goal"} 
-                    />
+                    {/* Real AI Insights */}
+                    <AIInsightsCard goalId={goalId} goalName={singleGoal.name} />
                     
                     <GoalSettingsCard />
                   </div>
@@ -326,11 +316,6 @@ const { todos:t} = useTodo();
                   <div className="xl:col-span-2 space-y-6">
                     <NotesSection notes={notes} />
                     <AttachmentsSection />
-                    {/* Goal Automation */}
-                    <GoalAutomation 
-                      goalId={goalId} 
-                      goalName={singleGoal?.name || "Goal"} 
-                    />
                   </div>
                   <div className="space-y-6">
                     <TeamMembersCard />
