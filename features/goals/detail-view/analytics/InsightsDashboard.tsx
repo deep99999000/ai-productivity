@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CountUp from "react-countup";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   LineChart,
   Line,
@@ -88,6 +89,8 @@ import {
   Workflow,
   FileText,
   CloudSun,
+  User,
+  ChevronLeft,
 } from "lucide-react";
 import type { Goal } from "@/features/goals/types/goalSchema";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
@@ -100,6 +103,7 @@ interface EnhancedInsightsDashboardProps {
   goals: Goal[];
   subgoals: Subgoal[];
   todos: Todo[];
+  goalId?: number;
 }
 
 interface SmartInsight {
@@ -117,6 +121,28 @@ interface SmartInsight {
   data?: any;
   suggestion?: string;
   estimatedTimeToFix?: string;
+}
+
+interface AIInsightResponse {
+  completionProbability: number;
+  estimatedCompletionDate: string;
+  riskFactors: string[];
+  bottlenecks: string[];
+  suggestionImprovements: string[];
+  recommendations: Array<{
+    id: string;
+    type: "optimization" | "risk" | "opportunity" | "automation";
+    title: string;
+    description: string;
+    impact: "high" | "medium" | "low";
+    effort: "quick" | "medium" | "complex";
+    confidence: number;
+    actionable: boolean;
+    automatable?: boolean;
+    estimatedTimeToImplement: string;
+    relatedGoalIds: number[];
+    createdAt: string;
+  }>;
 }
 
 interface ChartCardProps {
@@ -269,12 +295,50 @@ const ChartGradients = () => (
 const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
   goals,
   subgoals,
-  todos
+  todos,
+  goalId
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedInsight, setSelectedInsight] = useState<SmartInsight | null>(null);
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [aiInsights, setAiInsights] = useState<AIInsightResponse | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [selectedAIRecommendation, setSelectedAIRecommendation] = useState<AIInsightResponse['recommendations'][0] | null>(null);
+
+  // Fetch AI insights
+  const fetchAIInsights = async () => {
+    if (!goalId || !goals.length) return;
+    
+    setIsLoadingAI(true);
+    try {
+      const response = await fetch('/api/goals/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goal: goals[0],
+          subgoals,
+          todos
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAiInsights(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch AI insights:', error);
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
+  useEffect(() => {
+    if (goalId && goals.length > 0 && activeTab === 'insights') {
+      fetchAIInsights();
+    }
+  }, [goalId, goals.length, activeTab]);
 
   // Enhanced analytics calculations with real user data
   const analytics = useMemo(() => {
@@ -745,48 +809,48 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
         {/* Enhanced Main Tabbed Interface */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="mb-8">
-            <TabsList className="inline-flex h-12 items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm border border-slate-200/70 shadow-sm p-1 gap-1">
+            <TabsList className="grid w-full h-12 grid-cols-6 rounded-xl bg-white/80 backdrop-blur-sm border border-slate-200/70 shadow-sm p-1 gap-1">
               <TabsTrigger 
                 value="overview" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+                className="flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
               >
                 <Eye className="w-4 h-4" />
-                <span>Overview</span>
+                <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="performance" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+                className="flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
               >
                 <BarChart3 className="w-4 h-4" />
-                <span>Performance</span>
+                <span className="hidden sm:inline">Performance</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="trends" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+                className="flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Trends</span>
+                <span className="hidden sm:inline">Trends</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="insights" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+                className="flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
               >
                 <Brain className="w-4 h-4" />
-                <span>AI Insights</span>
+                <span className="hidden sm:inline">AI Insights</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="patterns" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+                className="flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
               >
                 <Activity className="w-4 h-4" />
-                <span>Patterns</span>
+                <span className="hidden sm:inline">Patterns</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="forecasts" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+                className="flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
               >
                 <Compass className="w-4 h-4" />
-                <span>Forecasts</span>
+                <span className="hidden sm:inline">Forecasts</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -1335,9 +1399,9 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Habit Impact Analysis */}
               <ChartCard
-                title="Habit Performance Impact"
-                icon={<RefreshCw className="w-5 h-5" />}
-                subtitle="How habits affect your productivity"
+                title="Habit Effectiveness"
+                icon={<Target className="w-5 h-5" />}
+                subtitle="How habits affect performance"
               >
                 <div className="space-y-4">
                   {mockAnalyticsData.habitData.streaks.map((habit: any, index: number) => (
@@ -1353,25 +1417,19 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
                           </Badge>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-slate-600">
-                          <span>Consistency</span>
-                          <span>{habit.consistency}%</span>
-                        </div>
-                        <Progress value={habit.consistency} className="h-2" />
-                      </div>
+                      <Progress value={habit.consistency} className="h-2" />
                     </div>
                   ))}
                 </div>
               </ChartCard>
 
-              {/* Environment & Context Analysis */}
+              {/* Environment Performance */}
               <ChartCard
                 title="Environment Impact"
                 icon={<CloudSun className="w-5 h-5" />}
                 subtitle="How environment affects performance"
               >
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <RadarChart data={[
                     { environment: 'Home Office', productivity: 85, focus: 82, creativity: 78, stress: 25 },
                     { environment: 'Coffee Shop', productivity: 72, focus: 68, creativity: 88, stress: 45 },
@@ -1571,216 +1629,243 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
 
         {/* Enhanced AI Insights Tab - Intelligent Analysis */}
         <TabsContent value="insights" className="space-y-8 mt-6">
-          {/* Section 1: Insight Summary */}
+          {/* AI Insights Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">AI-Powered Insights</h2>
-                <p className="text-sm text-slate-600">Smart recommendations based on your productivity patterns</p>
-              </div>
-            </div>
-
-            {/* Insight Categories Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <Card className="bg-gradient-to-br from-red-50 to-rose-100 border-red-200">
-                <CardContent className="p-4 text-center">
-                  <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <AlertTriangle className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-2xl font-bold text-red-700">
-                    {filteredInsights.filter(i => i.priority === 'high').length}
-                  </div>
-                  <div className="text-sm text-red-600 font-medium">High Priority</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-amber-50 to-orange-100 border-amber-200">
-                <CardContent className="p-4 text-center">
-                  <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <Clock className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-2xl font-bold text-amber-700">
-                    {filteredInsights.filter(i => i.priority === 'medium').length}
-                  </div>
-                  <div className="text-sm text-amber-600 font-medium">Medium Priority</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
-                <CardContent className="p-4 text-center">
-                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <Lightbulb className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-2xl font-bold text-blue-700">
-                    {filteredInsights.filter(i => i.actionable).length}
-                  </div>
-                  <div className="text-sm text-blue-600 font-medium">Actionable</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
-                <CardContent className="p-4 text-center">
-                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <Trophy className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-2xl font-bold text-green-700">
-                    {filteredInsights.filter(i => i.type === 'achievement').length}
-                  </div>
-                  <div className="text-sm text-green-600 font-medium">Achievements</div>
-                </CardContent>
-              </Card>
-            </div>
-          </motion.div>
-
-          {/* Section 2: Priority Insights */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-6"
-          >
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Priority Insights</h3>
-                <p className="text-sm text-slate-600">Most important recommendations for immediate action</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">AI-Powered Goal Analysis</h2>
+                  <p className="text-sm text-slate-600">Advanced insights and recommendations for your goal</p>
+                </div>
               </div>
-              <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-                <SelectTrigger className="w-32 border-slate-200/70 shadow-sm bg-white/80 backdrop-blur-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Insights</SelectItem>
-                  <SelectItem value="high">High Priority</SelectItem>
-                  <SelectItem value="medium">Medium Priority</SelectItem>
-                  <SelectItem value="low">Low Priority</SelectItem>
-                </SelectContent>
-              </Select>
+              <Button 
+                onClick={fetchAIInsights}
+                disabled={isLoadingAI}
+                className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700"
+              >
+                {isLoadingAI ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="w-4 h-4 mr-2" />
+                    Refresh Analysis
+                  </>
+                )}
+              </Button>
             </div>
 
-            <ScrollArea className="h-[600px]">
-              <div className="space-y-4 pr-4">
-                <AnimatePresence>
-                  {filteredInsights.map((insight, index) => (
-                    <motion.div
-                      key={insight.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.05, duration: 0.35 }}
-                    >
-                      <Card 
-                        className={`cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4 bg-gradient-to-br from-white to-slate-50/70 hover:to-slate-100/50 ${
-                          insight.priority === 'high' ? 'border-l-red-500 hover:border-l-red-600' :
-                          insight.priority === 'medium' ? 'border-l-amber-500 hover:border-l-amber-600' :
-                          'border-l-blue-500 hover:border-l-blue-600'
-                        }`}
-                        onClick={() => setSelectedInsight(insight)}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${insight.color} text-white flex items-center justify-center shadow-lg`}>
-                              {insight.icon}
-                            </div>
-                            
-                            <div className="flex-1 space-y-4">
-                              <div className="flex items-start justify-between">
-                                <div className="space-y-1">
-                                  <h4 className="font-semibold text-slate-900 text-lg">{insight.title}</h4>
-                                  <div className="flex items-center gap-2">
-                                    <Badge 
-                                      variant={insight.priority === 'high' ? 'destructive' : 
-                                              insight.priority === 'medium' ? 'default' : 'secondary'}
-                                      className="text-xs font-medium"
-                                    >
-                                      {insight.priority.toUpperCase()} PRIORITY
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs">
-                                      {insight.category}
-                                    </Badge>
-                                    {insight.actionable && (
+            {/* AI Insights Content */}
+            {aiInsights ? (
+              <div className="space-y-6">
+                {/* Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-200">
+                    <CardContent className="p-4 text-center">
+                      <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <Target className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-2xl font-bold text-emerald-700">
+                        {aiInsights.completionProbability}%
+                      </div>
+                      <div className="text-sm text-emerald-600 font-medium">Completion Probability</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
+                    <CardContent className="p-4 text-center">
+                      <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <Calendar className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-lg font-bold text-blue-700">
+                        {new Date(aiInsights.estimatedCompletionDate).toLocaleDateString()}
+                      </div>
+                      <div className="text-sm text-blue-600 font-medium">Estimated Completion</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-purple-50 to-violet-100 border-purple-200">
+                    <CardContent className="p-4 text-center">
+                      <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <Lightbulb className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-2xl font-bold text-purple-700">
+                        {aiInsights.recommendations.length}
+                      </div>
+                      <div className="text-sm text-purple-600 font-medium">AI Recommendations</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Risk Factors & Bottlenecks */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {aiInsights.riskFactors.length > 0 && (
+                    <Card className="border-red-200">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-red-700">
+                          <AlertTriangle className="w-5 h-5" />
+                          Risk Factors
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {aiInsights.riskFactors.map((risk, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
+                            <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0" />
+                            <p className="text-sm text-red-800">{risk}</p>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {aiInsights.bottlenecks.length > 0 && (
+                    <Card className="border-amber-200">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-amber-700">
+                          <Clock className="w-5 h-5" />
+                          Bottlenecks
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {aiInsights.bottlenecks.map((bottleneck, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0" />
+                            <p className="text-sm text-amber-800">{bottleneck}</p>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* AI Recommendations */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-purple-600" />
+                      AI Recommendations
+                    </CardTitle>
+                    <p className="text-sm text-slate-600">Personalized suggestions to improve your goal completion</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {aiInsights.recommendations.map((recommendation, index) => (
+                        <motion.div
+                          key={recommendation.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <Card 
+                            className="cursor-pointer transition-all duration-300 hover:shadow-md border-l-4 border-l-purple-500 hover:border-l-purple-600"
+                            onClick={() => {
+                              setSelectedAIRecommendation(recommendation);
+                              setShowAIDialog(true);
+                            }}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-4">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                  recommendation.type === 'optimization' ? 'bg-blue-100 text-blue-600' :
+                                  recommendation.type === 'risk' ? 'bg-red-100 text-red-600' :
+                                  recommendation.type === 'opportunity' ? 'bg-green-100 text-green-600' :
+                                  'bg-purple-100 text-purple-600'
+                                }`}>
+                                  {recommendation.type === 'optimization' ? <Target className="w-5 h-5" /> :
+                                   recommendation.type === 'risk' ? <AlertTriangle className="w-5 h-5" /> :
+                                   recommendation.type === 'opportunity' ? <Lightbulb className="w-5 h-5" /> :
+                                   <Zap className="w-5 h-5" />}
+                                </div>
+                                
+                                <div className="flex-1">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <h4 className="font-semibold text-slate-900">{recommendation.title}</h4>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant={recommendation.impact === 'high' ? 'destructive' : 
+                                                    recommendation.impact === 'medium' ? 'default' : 'secondary'}>
+                                        {recommendation.impact} impact
+                                      </Badge>
+                                      <Badge variant="outline">
+                                        {recommendation.confidence}% confidence
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  
+                                  <p className="text-sm text-slate-600 mb-3">{recommendation.description}</p>
+                                  
+                                  <div className="flex items-center gap-4 text-xs text-slate-500">
+                                    <span>⏱️ {recommendation.estimatedTimeToImplement}</span>
+                                    <span>🔧 {recommendation.effort} effort</span>
+                                    {recommendation.actionable && (
                                       <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                                        <Zap className="w-3 h-3 mr-1" />
                                         Actionable
                                       </Badge>
                                     )}
                                   </div>
                                 </div>
-                                <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                                
+                                <ChevronRight className="w-4 h-4 text-slate-400" />
                               </div>
-                              
-                              <p className="text-slate-600 leading-relaxed text-base">{insight.description}</p>
-                              
-                              {/* Metrics */}
-                              <div className="flex items-center gap-6 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <Target className="w-4 h-4 text-blue-600" />
-                                  </div>
-                                  <div>
-                                    <div className="font-semibold text-slate-900">{insight.impact}%</div>
-                                    <div className="text-xs text-slate-500">Impact</div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                    <Brain className="w-4 h-4 text-purple-600" />
-                                  </div>
-                                  <div>
-                                    <div className="font-semibold text-slate-900">{insight.confidence}%</div>
-                                    <div className="text-xs text-slate-500">Confidence</div>
-                                  </div>
-                                </div>
-                                {insight.estimatedTimeToFix && (
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                      <Timer className="w-4 h-4 text-green-600" />
-                                    </div>
-                                    <div>
-                                      <div className="font-semibold text-slate-900">{insight.estimatedTimeToFix}</div>
-                                      <div className="text-xs text-slate-500">Est. Time</div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {insight.suggestion && (
-                                <div className="mt-4 p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200/50">
-                                  <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                                      <Lightbulb className="w-4 h-4 text-white" />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <h5 className="font-medium text-slate-900">Recommended Action</h5>
-                                      <p className="text-sm text-slate-700 leading-relaxed">{insight.suggestion}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Improvements */}
+                {aiInsights.suggestionImprovements.length > 0 && (
+                  <Card className="border-green-200">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-green-700">
+                        <Zap className="w-5 h-5" />
+                        Quick Improvements
+                      </CardTitle>
+                      <p className="text-sm text-slate-600">Fast wins to boost your progress</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {aiInsights.suggestionImprovements.map((improvement, index) => (
+                          <div key={index} className="flex items-start gap-3 p-4 bg-green-50 rounded-lg">
+                            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-xs font-bold">{index + 1}</span>
                             </div>
+                            <p className="text-sm text-green-800">{improvement}</p>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                
-                {filteredInsights.length === 0 && (
-                  <div className="text-center py-12 text-slate-500">
-                    <Brain className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg font-medium mb-2">No insights match your current filter</p>
-                    <p className="text-sm">Try adjusting the priority filter to see more insights</p>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                {isLoadingAI ? (
+                  <div className="space-y-4">
+                    <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto" />
+                    <p className="text-lg font-medium text-slate-700">Analyzing your goal...</p>
+                    <p className="text-sm text-slate-500">AI is processing your data to generate insights</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Brain className="w-16 h-16 mx-auto text-slate-400" />
+                    <p className="text-lg font-medium text-slate-700">No AI insights yet</p>
+                    <p className="text-sm text-slate-500">Click "Refresh Analysis" to generate AI-powered insights for your goal</p>
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            )}
           </motion.div>
         </TabsContent>
 
@@ -2060,6 +2145,287 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
           </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Enhanced AI Recommendation Dialog */}
+      <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
+        <DialogContent className="min-w-5xl max-h-[90vh] overflow-hidden">
+          <DialogHeader className="pb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+                <Brain className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-bold text-slate-900">
+                  AI Recommendation Analysis
+                </DialogTitle>
+                <DialogDescription className="text-slate-600 mx-3">
+                  Comprehensive guidance and implementation strategy
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          {selectedAIRecommendation && (
+            <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-2">
+              {/* Hero Card */}
+              <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <div className="flex items-start gap-5">
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+                    selectedAIRecommendation.type === 'optimization' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' :
+                    selectedAIRecommendation.type === 'risk' ? 'bg-gradient-to-br from-red-500 to-red-600 text-white' :
+                    selectedAIRecommendation.type === 'opportunity' ? 'bg-gradient-to-br from-green-500 to-green-600 text-white' :
+                    'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
+                  }`}>
+                    {selectedAIRecommendation.type === 'optimization' ? <Target className="w-8 h-8" /> :
+                     selectedAIRecommendation.type === 'risk' ? <AlertTriangle className="w-8 h-8" /> :
+                     selectedAIRecommendation.type === 'opportunity' ? <Lightbulb className="w-8 h-8" /> :
+                     <Zap className="w-8 h-8" />}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-slate-900 mb-3">
+                      {selectedAIRecommendation.title}
+                    </h3>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge 
+                        variant={selectedAIRecommendation.impact === 'high' ? 'destructive' : 
+                                selectedAIRecommendation.impact === 'medium' ? 'default' : 'secondary'}
+                        className="px-3 py-1"
+                      >
+                        {selectedAIRecommendation.impact.toUpperCase()} IMPACT
+                      </Badge>
+                      <Badge variant="outline" className="px-3 py-1">
+                        {selectedAIRecommendation.effort.toUpperCase()} EFFORT
+                      </Badge>
+                      <Badge variant="outline" className="px-3 py-1 bg-purple-50 text-purple-700 border-purple-200">
+                        {selectedAIRecommendation.confidence}% CONFIDENCE
+                      </Badge>
+                      <Badge className="px-3 py-1 bg-emerald-100 text-emerald-700 border-emerald-200">
+                        {selectedAIRecommendation.type.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <p className="text-slate-700 leading-relaxed text-lg">
+                      {selectedAIRecommendation.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Metrics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Success Probability */}
+                <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-white" />
+                      </div>
+                      <h4 className="font-semibold text-blue-900">Success Rate</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="text-3xl font-bold text-blue-700">
+                        {selectedAIRecommendation.confidence}%
+                      </div>
+                      <Progress value={selectedAIRecommendation.confidence} className="h-3" />
+                      <p className="text-sm text-blue-700">AI confidence level</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Implementation Time */}
+                <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-white" />
+                      </div>
+                      <h4 className="font-semibold text-emerald-900">Timeline</h4>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-2xl font-bold text-emerald-700">
+                        {selectedAIRecommendation.estimatedTimeToImplement}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3].map((level) => (
+                          <div
+                            key={level}
+                            className={`w-4 h-4 rounded-full ${
+                              level <= (selectedAIRecommendation.effort === 'quick' ? 1 : 
+                                       selectedAIRecommendation.effort === 'medium' ? 2 : 3) 
+                                ? 'bg-emerald-500' : 'bg-slate-200'
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-2 text-sm text-emerald-700 font-medium">
+                          {selectedAIRecommendation.effort} effort
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Actionability */}
+                <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
+                        <CheckCircle2 className="w-5 h-5 text-white" />
+                      </div>
+                      <h4 className="font-semibold text-purple-900">Readiness</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div className={`text-2xl font-bold ${selectedAIRecommendation.actionable ? 'text-purple-700' : 'text-slate-600'}`}>
+                        {selectedAIRecommendation.actionable ? 'Ready' : 'Prep Needed'}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {selectedAIRecommendation.actionable ? (
+                          <CheckCircle2 className="w-5 h-5 text-purple-500" />
+                        ) : (
+                          <Clock className="w-5 h-5 text-amber-500" />
+                        )}
+                        <span className="text-sm text-purple-700">
+                          {selectedAIRecommendation.actionable ? 'Can start immediately' : 'Requires preparation'}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Implementation Guide */}
+              <Card className="border-slate-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5 text-white" />
+                    </div>
+                    Implementation Roadmap
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {selectedAIRecommendation.description.split('.').filter(step => step.trim()).slice(0, 5).map((step, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex items-start gap-4 p-4 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-200 hover:shadow-sm transition-all duration-200"
+                      >
+                        <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-slate-700 leading-relaxed">
+                            {step.trim()}.
+                          </p>
+                        </div>
+                        <div className="w-6 h-6 border-2 border-slate-300 rounded-full flex-shrink-0 mt-2" />
+                      </motion.div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Additional Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-slate-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <Target className="w-4 h-4 text-white" />
+                      </div>
+                      Related Goals
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {selectedAIRecommendation.relatedGoalIds.length > 0 ? (
+                        selectedAIRecommendation.relatedGoalIds.map((goalId) => (
+                          <div key={goalId} className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                              {goalId}
+                            </div>
+                            <span className="text-sm font-medium text-blue-900">Goal #{goalId}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-slate-500 italic">No related goals specified</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-slate-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <div className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center">
+                        <Calendar className="w-4 h-4 text-white" />
+                      </div>
+                      Metadata
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Created</span>
+                        <span className="text-sm font-medium text-slate-900">
+                          {new Date(selectedAIRecommendation.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Type</span>
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                          {selectedAIRecommendation.type}
+                        </Badge>
+                      </div>
+                      {selectedAIRecommendation.automatable !== undefined && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-slate-600">Automation</span>
+                          <div className="flex items-center gap-2">
+                            {selectedAIRecommendation.automatable ? (
+                              <Zap className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <User className="w-4 h-4 text-slate-500" />
+                            )}
+                            <span className="text-sm text-slate-700">
+                              {selectedAIRecommendation.automatable ? 'Automatable' : 'Manual'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Action Footer */}
+              <div className="flex items-center justify-between pt-6 border-t border-slate-200">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAIDialog(false)}
+                  className="px-6"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Back to Insights
+                </Button>
+                <div className="flex items-center gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50 px-6"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                  <Button className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 px-6">
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Mark as Implemented
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Floating Actions */}
       <AnalyticsFloatingActions

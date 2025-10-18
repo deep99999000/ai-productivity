@@ -307,6 +307,7 @@ const { todos:t } = useTodo();
                     goals={[singleGoal].filter(Boolean) as Goal[]}
                     subgoals={goalSubgoals}
                     todos={goalTodos}
+                    goalId={goalId}
                   />
                 </div>
               ),
