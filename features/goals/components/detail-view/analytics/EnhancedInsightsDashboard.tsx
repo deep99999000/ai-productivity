@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CountUp from "react-countup";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -86,10 +86,15 @@ import {
   Compass,
   Map,
   Workflow,
+  FileText,
+  CloudSun,
 } from "lucide-react";
 import type { Goal } from "@/features/goals/types/goalSchema";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import type { Todo } from "@/features/todo/todoSchema";
+import { mockAnalyticsData, type MockAnalyticsData } from "@/features/goals/data/mockAnalyticsData";
+import { EnhancedMetricCard } from "./EnhancedMetricCard";
+import { AnalyticsFloatingActions } from "./AnalyticsFloatingActions";
 
 interface EnhancedInsightsDashboardProps {
   goals: Goal[];
@@ -125,25 +130,29 @@ interface ChartCardProps {
 
 const ChartCard: React.FC<ChartCardProps> = ({ title, icon, className = "", children, subtitle, actionButton }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.3 }}
+    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     className={className}
   >
-    <Card className="p-6 h-full bg-white/80 backdrop-blur-sm border border-gray-200/80 hover:shadow-lg hover:border-gray-300/80 transition-all duration-300">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-            {icon}
+    <Card className="border-slate-200/70 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-slate-50 h-full">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-600 flex items-center justify-center">
+              {icon}
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold text-slate-900">{title}</CardTitle>
+              {subtitle && <p className="text-sm text-slate-600 mt-0.5">{subtitle}</p>}
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">{title}</h3>
-            {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
-          </div>
+          {actionButton}
         </div>
-        {actionButton}
-      </div>
-      {children}
+      </CardHeader>
+      <CardContent className="pt-0">
+        {children}
+      </CardContent>
     </Card>
   </motion.div>
 );
@@ -538,417 +547,877 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
     filter === 'all' || insight.priority === filter
   );
 
+  const fadeIn = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-            <Brain className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
-            <p className="text-gray-600">Comprehensive insights into your productivity patterns</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Select value={timeframe} onValueChange={(value: any) => setTimeframe(value)}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="month">Month</SelectItem>
-              <SelectItem value="quarter">Quarter</SelectItem>
-              <SelectItem value="year">Year</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-            <SelectTrigger className="w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* KPI Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        <MetricCard
-          title="Completion Rate"
-          value={analytics.completionRate}
-          suffix="%"
-          animateValue
-          change={analytics.velocityChange}
-          changeType={analytics.velocityChange > 0 ? 'positive' : analytics.velocityChange < 0 ? 'negative' : 'neutral'}
-          icon={<CheckCircle2 className="w-6 h-6" />}
-          color="from-emerald-500 to-emerald-600"
-        />
-        
-        <MetricCard
-          title="Current Streak"
-          value={analytics.currentStreak}
-          suffix=" days"
-          animateValue
-          icon={<Flame className="w-6 h-6" />}
-          color="from-orange-500 to-red-500"
-          subtitle={`Best: ${analytics.longestStreak} days`}
-        />
-        
-        <MetricCard
-          title="Weekly Velocity"
-          value={analytics.velocityThisWeek}
-          suffix=" tasks"
-          animateValue
-          change={analytics.velocityChange}
-          changeType={analytics.velocityChange > 0 ? 'positive' : analytics.velocityChange < 0 ? 'negative' : 'neutral'}
-          icon={<Rocket className="w-6 h-6" />}
-          color="from-blue-500 to-blue-600"
-        />
-        
-        <MetricCard
-          title="Tasks Completed"
-          value={analytics.completedTodos}
-          suffix={` / ${analytics.totalTodos}`}
-          animateValue
-          icon={<Target className="w-6 h-6" />}
-          color="from-purple-500 to-purple-600"
-          subtitle={`${analytics.overdueTodos} overdue`}
-        />
-      </motion.div>
-
-      {/* Main Tabbed Interface */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6 bg-white/70 backdrop-blur-sm">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Eye className="w-4 h-4" />
-            <span className="hidden sm:inline">Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="performance" className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Performance</span>
-          </TabsTrigger>
-          <TabsTrigger value="trends" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            <span className="hidden sm:inline">Trends</span>
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            <span className="hidden sm:inline">AI Insights</span>
-          </TabsTrigger>
-          <TabsTrigger value="patterns" className="flex items-center gap-2">
-            <Activity className="w-4 h-4" />
-            <span className="hidden sm:inline">Patterns</span>
-          </TabsTrigger>
-          <TabsTrigger value="forecasts" className="flex items-center gap-2">
-            <Compass className="w-4 h-4" />
-            <span className="hidden sm:inline">Forecasts</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="container mx-auto max-w-7xl px-6 md:px-8 py-6 md:py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="mb-6"
+        >
+          <div className="mb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-600 to-blue-600 text-white flex items-center justify-center shadow-lg">
+                <Brain className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 bg-clip-text text-transparent leading-tight">
+                  Analytics Dashboard
+                </h1>
+                <p className="text-slate-600 mt-1">Deep insights into your productivity patterns and performance</p>
+              </div>
+            </div>
             
-            {/* Velocity Trend Chart */}
-            <ChartCard
-              title="Task Velocity Trend"
-              icon={<Rocket className="w-5 h-5" />}
-              subtitle="Tasks completed over time"
-              className="xl:col-span-2"
-            >
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={analytics.velocityData}>
-                  <ChartGradients />
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="period" stroke="#666" fontSize={12} />
-                  <YAxis stroke="#666" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#6366f1"
-                    fill={CHART_COLORS.gradients.blue}
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            {/* Weekly Pattern */}
-            <ChartCard
-              title="Weekly Pattern"
-              icon={<Calendar className="w-5 h-5" />}
-              subtitle="Productivity by day"
-            >
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={analytics.productivityPatterns}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="day" stroke="#666" fontSize={10} />
-                  <YAxis stroke="#666" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="completions" 
-                    fill="#8b5cf6"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            {/* Goal Health Radar */}
-            <ChartCard
-              title="Goal Health"
-              icon={<Target className="w-5 h-5" />}
-              subtitle="Multi-dimensional analysis"
-              className="xl:col-span-1"
-            >
-              <ResponsiveContainer width="100%" height={280}>
-                <RadarChart data={analytics.goalHealthScores.slice(0, 6)}>
-                  <PolarGrid stroke="#e5e7eb" />
-                  <PolarAngleAxis dataKey="name" fontSize={10} />
-                  <PolarRadiusAxis 
-                    domain={[0, 100]} 
-                    fontSize={8}
-                    angle={90}
-                    tickCount={4}
-                  />
-                  <Radar
-                    name="Health Score"
-                    dataKey="healthScore"
-                    stroke="#10b981"
-                    fill="#10b981"
-                    fillOpacity={0.2}
-                    strokeWidth={2}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            {/* Burndown Chart */}
-            <ChartCard
-              title="Burndown Chart"
-              icon={<TrendingDown className="w-5 h-5" />}
-              subtitle="Progress vs ideal pace"
-              className="xl:col-span-2"
-            >
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={analytics.burndownData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" stroke="#666" fontSize={12} />
-                  <YAxis stroke="#666" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line
-                    type="monotone"
-                    dataKey="remaining"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    name="Actual"
-                    dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="ideal"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="Ideal"
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                  />
-                  <Legend />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            {/* Priority Distribution */}
-            <ChartCard
-              title="Priority Distribution"
-              icon={<PieIcon className="w-5 h-5" />}
-              subtitle="Task priority breakdown"
-            >
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={analytics.priorityEffectiveness.effectiveness}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="total"
-                    label={({ priority, total }) => `${priority}: ${total}`}
-                  >
-                    {analytics.priorityEffectiveness.effectiveness.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={CHART_COLORS.primary[index % CHART_COLORS.primary.length]} 
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartCard>
+            <div className="flex items-center gap-3">
+              <Select value={timeframe} onValueChange={(value: any) => setTimeframe(value)}>
+                <SelectTrigger className="w-32 border-slate-200/70 shadow-sm bg-white/80 backdrop-blur-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="month">Month</SelectItem>
+                  <SelectItem value="quarter">Quarter</SelectItem>
+                  <SelectItem value="year">Year</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+                <SelectTrigger className="w-28 border-slate-200/70 shadow-sm bg-white/80 backdrop-blur-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-slate-200/70 shadow-sm bg-white/80 backdrop-blur-sm hover:bg-slate-50"
+                  onClick={() => {
+                    const { exportAnalyticsData } = require('./analyticsExport');
+                    exportAnalyticsData(goals, subgoals, todos, timeframe, 'json');
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export JSON
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-slate-200/70 shadow-sm bg-white/80 backdrop-blur-sm hover:bg-slate-50"
+                  onClick={() => {
+                    const { exportAnalyticsData } = require('./analyticsExport');
+                    exportAnalyticsData(goals, subgoals, todos, timeframe, 'csv');
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-slate-200/70 shadow-sm bg-white/80 backdrop-blur-sm hover:bg-slate-50"
+                  onClick={async () => {
+                    const { shareAnalytics, generateAnalyticsSummary } = require('./analyticsExport');
+                    const summary = generateAnalyticsSummary(
+                      analytics.completionRate,
+                      analytics.velocityThisWeek,
+                      analytics.currentStreak,
+                      timeframe
+                    );
+                    await shareAnalytics('Goal Analytics', summary);
+                  }}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+            </div>
           </div>
+        </motion.div>
+
+        {/* KPI Cards - Enhanced Dashboard Style */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+          <motion.div {...fadeIn}>
+            <Card className="border-slate-200/70 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-slate-50 py-5">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+                <CardTitle className="text-sm font-medium text-slate-600">Completion Rate</CardTitle>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-50">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-2xl font-bold text-slate-900">
+                  <CountUp end={analytics.completionRate} duration={1.5} decimals={1} />%
+                </div>
+                {analytics.velocityChange !== 0 && (
+                  <div className="flex items-center gap-1 mt-1">
+                    {analytics.velocityChange > 0 ? (
+                      <ArrowUp className="w-3 h-3 text-emerald-600" />
+                    ) : (
+                      <ArrowDown className="w-3 h-3 text-red-600" />
+                    )}
+                    <span className={`text-xs ${analytics.velocityChange > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {Math.abs(analytics.velocityChange)}%
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+          
+          <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }}>
+            <Card className="border-slate-200/70 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-slate-50 py-5">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+                <CardTitle className="text-sm font-medium text-slate-600">Current Streak</CardTitle>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50">
+                  <Flame className="w-5 h-5 text-orange-600" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-2xl font-bold text-slate-900">
+                  <CountUp end={analytics.currentStreak} duration={1.5} /> days
+                </div>
+                <div className="text-xs text-slate-500 mt-1">Best: {analytics.longestStreak} days</div>
+              </CardContent>
+            </Card>
+          </motion.div>
+          
+          <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }}>
+            <Card className="border-slate-200/70 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-slate-50 py-5">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+                <CardTitle className="text-sm font-medium text-slate-600">Weekly Velocity</CardTitle>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+                  <Rocket className="w-5 h-5 text-blue-600" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-2xl font-bold text-slate-900">
+                  <CountUp end={analytics.velocityThisWeek} duration={1.5} /> tasks
+                </div>
+                {analytics.velocityChange !== 0 && (
+                  <div className="flex items-center gap-1 mt-1">
+                    {analytics.velocityChange > 0 ? (
+                      <ArrowUp className="w-3 h-3 text-blue-600" />
+                    ) : (
+                      <ArrowDown className="w-3 h-3 text-red-600" />
+                    )}
+                    <span className={`text-xs ${analytics.velocityChange > 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                      {Math.abs(analytics.velocityChange)}%
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+          
+          <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.15 }}>
+            <Card className="border-slate-200/70 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-slate-50 py-5">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+                <CardTitle className="text-sm font-medium text-slate-600">Tasks Progress</CardTitle>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-purple-50 to-violet-50">
+                  <Target className="w-5 h-5 text-purple-600" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-2xl font-bold text-slate-900">
+                  <CountUp end={analytics.completedTodos} duration={1.5} /> / {analytics.totalTodos}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">{analytics.overdueTodos} overdue</div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Enhanced Main Tabbed Interface */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className="mb-8">
+            <TabsList className="inline-flex h-12 items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm border border-slate-200/70 shadow-sm p-1 gap-1">
+              <TabsTrigger 
+                value="overview" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Overview</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="performance" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Performance</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="trends" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Trends</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="insights" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+              >
+                <Brain className="w-4 h-4" />
+                <span>AI Insights</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="patterns" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+              >
+                <Activity className="w-4 h-4" />
+                <span>Patterns</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="forecasts" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-slate-100 gap-2"
+              >
+                <Compass className="w-4 h-4" />
+                <span>Forecasts</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+        {/* Enhanced Overview Tab - Better Sectioned Dashboard */}
+        <TabsContent value="overview" className="space-y-8 mt-6">
+          {/* Section 1: Key Performance Indicators */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-4"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <Target className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Performance Overview</h2>
+                <p className="text-sm text-slate-600">Key metrics and current status at a glance</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              <EnhancedMetricCard
+                title="Completion Rate"
+                value={analytics.completionRate}
+                suffix="%"
+                change={analytics.velocityChange}
+                changeType={analytics.velocityChange > 0 ? 'positive' : 'negative'}
+                icon={CheckCircle2}
+                iconColor="from-indigo-500 to-purple-600"
+                subtitle="vs last period"
+                delay={0.1}
+                decimals={1}
+              />
+
+              <EnhancedMetricCard
+                title="Current Streak"
+                value={analytics.currentStreak}
+                suffix=" days"
+                icon={Flame}
+                iconColor="from-orange-500 to-amber-600"
+                subtitle={`Best: ${analytics.longestStreak} days`}
+                delay={0.2}
+              />
+
+              <EnhancedMetricCard
+                title="Weekly Velocity"
+                value={analytics.velocityThisWeek}
+                suffix=" tasks"
+                icon={Rocket}
+                iconColor="from-blue-500 to-indigo-600"
+                subtitle="On track"
+                delay={0.3}
+                badge="Active"
+                badgeVariant="default"
+              />
+
+              <EnhancedMetricCard
+                title="Focus Quality"
+                value={75}
+                suffix="%"
+                icon={Focus}
+                iconColor="from-emerald-500 to-green-600"
+                subtitle="Deep work sessions"
+                delay={0.4}
+              />
+            </div>
+          </motion.div>
+
+          {/* Section 2: Time & Energy Analysis */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                <Battery className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Time & Energy Patterns</h2>
+                <p className="text-sm text-slate-600">Understanding your productivity rhythms</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Productivity Heatmap - Enhanced Design */}
+              <ChartCard
+                title="24-Hour Productivity Map"
+                icon={<Battery className="w-5 h-5" />}
+                subtitle="Your peak performance hours"
+                className="lg:col-span-2"
+              >
+                <div className="space-y-6">
+                  <div className="grid grid-cols-12 gap-2">
+                    {Array.from({ length: 24 }, (_, hour) => {
+                      const data = mockAnalyticsData.hourlyProductivity[hour];
+                      const intensity = data.efficiency / 100;
+                      return (
+                        <motion.div
+                          key={hour}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: hour * 0.02, duration: 0.3 }}
+                          className={`aspect-square rounded-lg text-xs flex items-center justify-center text-white font-semibold shadow-sm transition-all duration-200 hover:scale-110 cursor-pointer ${
+                            intensity > 0.8 ? 'bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-200' :
+                            intensity > 0.6 ? 'bg-gradient-to-br from-emerald-400 to-green-500 shadow-emerald-100' :
+                            intensity > 0.4 ? 'bg-gradient-to-br from-yellow-400 to-orange-400 shadow-yellow-100' :
+                            intensity > 0.2 ? 'bg-gradient-to-br from-orange-400 to-red-400 shadow-orange-100' : 'bg-gradient-to-br from-red-400 to-red-500 shadow-red-100'
+                          }`}
+                          title={`${hour}:00 - ${data.completions} tasks, ${data.efficiency}% efficiency`}
+                        >
+                          {hour}
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-slate-700">Peak Hours</span>
+                      <span className="text-slate-600">9AM - 11AM, 7PM - 9PM</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-4 text-xs">
+                      <span className="text-slate-700 font-medium">Low</span>
+                      <div className="flex gap-1.5">
+                        <div className="w-4 h-4 bg-gradient-to-br from-red-400 to-red-500 rounded shadow-sm" />
+                        <div className="w-4 h-4 bg-gradient-to-br from-orange-400 to-red-400 rounded shadow-sm" />
+                        <div className="w-4 h-4 bg-gradient-to-br from-yellow-400 to-orange-400 rounded shadow-sm" />
+                        <div className="w-4 h-4 bg-gradient-to-br from-emerald-400 to-green-500 rounded shadow-sm" />
+                        <div className="w-4 h-4 bg-gradient-to-br from-emerald-500 to-green-600 rounded shadow-sm" />
+                      </div>
+                      <span className="text-slate-700 font-medium">High</span>
+                    </div>
+                  </div>
+                </div>
+              </ChartCard>
+
+              {/* Weekly Wellness Radar */}
+              <ChartCard
+                title="Weekly Wellness"
+                icon={<Activity className="w-5 h-5" />}
+                subtitle="Mood & energy tracking"
+              >
+                <div className="space-y-4">
+                  <ResponsiveContainer width="100%" height={240}>
+                    <RadarChart data={mockAnalyticsData.weeklyPatterns}>
+                      <PolarGrid stroke="#e5e7eb" />
+                      <PolarAngleAxis dataKey="day" fontSize={10} />
+                      <PolarRadiusAxis 
+                        domain={[0, 10]} 
+                        fontSize={8}
+                        angle={90}
+                        tickCount={5}
+                      />
+                      <Radar
+                        name="Mood"
+                        dataKey="mood"
+                        stroke="#f59e0b"
+                        fill="#f59e0b"
+                        fillOpacity={0.2}
+                        strokeWidth={2}
+                      />
+                      <Radar
+                        name="Energy"
+                        dataKey="energyLevel"
+                        stroke="#10b981"
+                        fill="#10b981"
+                        fillOpacity={0.1}
+                        strokeWidth={2}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                  <div className="bg-slate-50 rounded-lg p-3 text-center">
+                    <div className="text-sm font-medium text-slate-700">Best Day</div>
+                    <div className="text-lg font-bold text-emerald-600">Wednesday</div>
+                    <div className="text-xs text-slate-500">Peak mood & energy</div>
+                  </div>
+                </div>
+              </ChartCard>
+            </div>
+          </motion.div>
+
+          {/* Section 3: Task & Priority Analysis */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+                <Layers className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Task Intelligence</h2>
+                <p className="text-sm text-slate-600">Smart insights into your work patterns</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Priority Distribution */}
+              <ChartCard
+                title="Priority Flow"
+                icon={<TrendingUp className="w-5 h-5" />}
+                subtitle="How priorities evolve over time"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <AreaChart data={mockAnalyticsData.priorityTrends}>
+                    <ChartGradients />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="period" stroke="#666" fontSize={12} />
+                    <YAxis stroke="#666" fontSize={12} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="urgent"
+                      stackId="1"
+                      stroke="#ef4444"
+                      fill="#ef4444"
+                      fillOpacity={0.8}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="high"
+                      stackId="1"
+                      stroke="#f59e0b"
+                      fill="#f59e0b"
+                      fillOpacity={0.8}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="medium"
+                      stackId="1"
+                      stroke="#6366f1"
+                      fill="#6366f1"
+                      fillOpacity={0.8}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="low"
+                      stackId="1"
+                      stroke="#10b981"
+                      fill="#10b981"
+                      fillOpacity={0.8}
+                    />
+                    <Legend />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* Category Performance Matrix */}
+              <ChartCard
+                title="Category Performance"
+                icon={<Layers className="w-5 h-5" />}
+                subtitle="Difficulty vs satisfaction analysis"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <ScatterChart data={mockAnalyticsData.categoryAnalytics}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="difficulty" 
+                      name="Difficulty"
+                      stroke="#666" 
+                      fontSize={12}
+                      domain={[0, 10]}
+                    />
+                    <YAxis 
+                      dataKey="satisfaction" 
+                      name="Satisfaction"
+                      stroke="#666" 
+                      fontSize={12}
+                      domain={[0, 10]}
+                    />
+                    <Tooltip 
+                      cursor={{ strokeDasharray: '3 3' }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200">
+                              <p className="font-semibold text-gray-900 mb-2">{data.name}</p>
+                              <div className="space-y-1 text-sm text-gray-600">
+                                <p>Difficulty: {data.difficulty}/10</p>
+                                <p>Satisfaction: {data.satisfaction}/10</p>
+                                <p>Completions: {data.completions}</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Scatter 
+                      dataKey="completions" 
+                      fill="#6366f1"
+                    />
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
+          </motion.div>
         </TabsContent>
 
-        {/* Performance Tab */}
-        <TabsContent value="performance" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            {/* Completion Rate Over Time */}
-            <ChartCard
-              title="Completion Rate Trend"
-              icon={<CheckCircle2 className="w-5 h-5" />}
-              subtitle="Completion percentage over time"
-            >
-              <ResponsiveContainer width="100%" height={320}>
-                <ComposedChart data={analytics.progressTrends}>
-                  <ChartGradients />
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="period" stroke="#666" fontSize={12} />
-                  <YAxis stroke="#666" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="completionRate"
-                    stroke="#6366f1"
-                    fill={CHART_COLORS.gradients.blue}
-                    fillOpacity={0.3}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="completionRate"
-                    stroke="#6366f1"
-                    strokeWidth={3}
-                    dot={{ fill: '#6366f1', strokeWidth: 2, r: 5 }}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </ChartCard>
+        {/* Enhanced Performance Tab - Comprehensive Performance Analytics */}
+        <TabsContent value="performance" className="space-y-8 mt-6">
+          {/* Section 1: Performance Metrics */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Performance Metrics</h2>
+                <p className="text-sm text-slate-600">Detailed analysis of your productivity performance</p>
+              </div>
+            </div>
 
-            {/* Priority Effectiveness */}
-            <ChartCard
-              title="Priority Effectiveness"
-              icon={<Target className="w-5 h-5" />}
-              subtitle="Completion rates by priority"
-            >
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={analytics.priorityEffectiveness.effectiveness}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="priority" stroke="#666" fontSize={12} />
-                  <YAxis stroke="#666" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="completionRate" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="total" fill="#e5e7eb" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Velocity & Throughput */}
+              <ChartCard
+                title="Velocity & Throughput"
+                icon={<Rocket className="w-5 h-5" />}
+                subtitle="Task completion rate over time"
+              >
+                <div className="space-y-6">
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={analytics.velocityData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="period" stroke="#666" fontSize={12} />
+                      <YAxis stroke="#666" fontSize={12} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        dot={{ fill: '#10b981', strokeWidth: 2, r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="bg-emerald-50 rounded-lg p-3">
+                      <div className="text-lg font-bold text-emerald-600">
+                        <CountUp end={analytics.velocityThisWeek} duration={1.5} />
+                      </div>
+                      <div className="text-xs text-slate-600">This Week</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <div className="text-lg font-bold text-blue-600">
+                        <CountUp end={Math.round(analytics.velocityThisWeek * 1.2)} duration={1.5} />
+                      </div>
+                      <div className="text-xs text-slate-600">Target</div>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-3">
+                      <div className="text-lg font-bold text-purple-600">
+                        {analytics.velocityChange > 0 ? '+' : ''}{analytics.velocityChange}%
+                      </div>
+                      <div className="text-xs text-slate-600">Change</div>
+                    </div>
+                  </div>
+                </div>
+              </ChartCard>
 
-            {/* Time Distribution */}
-            <ChartCard
-              title="Time Distribution"
-              icon={<Timer className="w-5 h-5" />}
-              subtitle="Task completion times"
-            >
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={analytics.timeDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="range" stroke="#666" fontSize={12} />
-                  <YAxis stroke="#666" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="count" 
-                    fill="#f59e0b"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
+              {/* Quality & Satisfaction */}
+              <ChartCard
+                title="Quality Score"
+                icon={<Award className="w-5 h-5" />}
+                subtitle="Work quality and satisfaction metrics"
+              >
+                <div className="space-y-6">
+                  <div className="relative">
+                    <div className="flex items-center justify-center">
+                      <div className="relative w-32 h-32">
+                        <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                          <circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            fill="none"
+                            stroke="#e2e8f0"
+                            strokeWidth="8"
+                          />
+                          <motion.circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            fill="none"
+                            stroke="url(#qualityGradient)"
+                            strokeWidth="8"
+                            strokeDasharray={`${2.51 * 85} ${2.51 * (100 - 85)}`}
+                            strokeLinecap="round"
+                            initial={{ strokeDasharray: "0 251" }}
+                            animate={{ strokeDasharray: `${2.51 * 85} ${2.51 * (100 - 85)}` }}
+                            transition={{ duration: 2, ease: "easeOut" }}
+                          />
+                          <defs>
+                            <linearGradient id="qualityGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#10b981" />
+                              <stop offset="100%" stopColor="#059669" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-slate-900">
+                              <CountUp end={85} duration={2} />%
+                            </div>
+                            <div className="text-xs text-slate-600">Quality</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div className="bg-green-50 rounded-lg p-3">
+                      <div className="text-sm font-bold text-green-600">8.4/10</div>
+                      <div className="text-xs text-slate-600">Satisfaction</div>
+                    </div>
+                    <div className="bg-indigo-50 rounded-lg p-3">
+                      <div className="text-sm font-bold text-indigo-600">92%</div>
+                      <div className="text-xs text-slate-600">Accuracy</div>
+                    </div>
+                  </div>
+                </div>
+              </ChartCard>
+            </div>
+          </motion.div>
 
-            {/* Sprint Analytics */}
-            <ChartCard
-              title="Sprint Analytics"
-              icon={<FastForward className="w-5 h-5" />}
-              subtitle="Sprint performance metrics"
-            >
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={analytics.sprintAnalytics.sprints}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="sprint" stroke="#666" fontSize={12} />
-                  <YAxis stroke="#666" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line
-                    type="monotone"
-                    dataKey="velocity"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    name="Velocity"
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="quality"
-                    stroke="#6366f1"
-                    strokeWidth={2}
-                    name="Quality"
-                    dot={{ fill: '#6366f1', strokeWidth: 2, r: 4 }}
-                  />
-                  <Legend />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartCard>
+          {/* Section 2: Collaboration & Teamwork */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Collaboration Analysis</h2>
+                <p className="text-sm text-slate-600">Team interaction and collaboration effectiveness</p>
+              </div>
+            </div>
 
-            {/* Category Performance Comparison */}
-            <ChartCard
-              title="Category Performance"
-              icon={<Layers className="w-5 h-5" />}
-              subtitle="Performance across categories"
-              className="lg:col-span-2"
-            >
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={analytics.categoryPerformance}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" stroke="#666" fontSize={12} />
-                  <YAxis stroke="#666" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="completionRate" 
-                    fill="#6366f1" 
-                    radius={[4, 4, 0, 0]}
-                    name="Completion Rate"
-                  />
-                  <Bar 
-                    dataKey="total" 
-                    fill="#e5e7eb" 
-                    radius={[4, 4, 0, 0]}
-                    name="Total Tasks"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Team Performance */}
+              <ChartCard
+                title="Collaboration Effectiveness"
+                icon={<Users className="w-5 h-5" />}
+                subtitle="Team vs individual performance"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={[
+                    { type: 'Solo Work', efficiency: 88, satisfaction: 82 },
+                    { type: 'Pair Work', efficiency: 92, satisfaction: 88 },
+                    { type: 'Team Work', efficiency: 75, satisfaction: 75 },
+                    { type: 'Meetings', efficiency: 45, satisfaction: 52 }
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="type" stroke="#666" fontSize={12} />
+                    <YAxis stroke="#666" fontSize={12} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="efficiency" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Efficiency %" />
+                    <Bar dataKey="satisfaction" fill="#10b981" radius={[4, 4, 0, 0]} name="Satisfaction %" />
+                    <Legend />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* Communication Patterns */}
+              <ChartCard
+                title="Communication Flow"
+                icon={<MessageSquare className="w-5 h-5" />}
+                subtitle="Response times and interaction quality"
+              >
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-blue-600">2.3h</div>
+                      <div className="text-sm text-slate-600">Avg Response</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-green-600">94%</div>
+                      <div className="text-sm text-slate-600">Response Rate</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {[
+                      { channel: 'Email', response: '4.2h', volume: 45 },
+                      { channel: 'Slack', response: '45m', volume: 78 },
+                      { channel: 'Meetings', response: 'Real-time', volume: 12 },
+                      { channel: 'Comments', response: '1.8h', volume: 23 }
+                    ].map((item, index) => (
+                      <div key={item.channel} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${
+                            index === 0 ? 'bg-red-400' :
+                            index === 1 ? 'bg-green-400' :
+                            index === 2 ? 'bg-blue-400' : 'bg-purple-400'
+                          }`} />
+                          <span className="text-sm font-medium">{item.channel}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold">{item.response}</div>
+                          <div className="text-xs text-slate-500">{item.volume} msgs</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </ChartCard>
+            </div>
+          </motion.div>
+
+          {/* Section 3: Habits & Optimization */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+                <RefreshCw className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Habits & Optimization</h2>
+                <p className="text-sm text-slate-600">Performance drivers and improvement opportunities</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Habit Impact Analysis */}
+              <ChartCard
+                title="Habit Performance Impact"
+                icon={<RefreshCw className="w-5 h-5" />}
+                subtitle="How habits affect your productivity"
+              >
+                <div className="space-y-4">
+                  {mockAnalyticsData.habitData.streaks.map((habit: any, index: number) => (
+                    <div key={habit.habit} className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-semibold text-slate-700">{habit.habit}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-1 bg-slate-100 rounded-full font-medium">
+                            {habit.current}d streak
+                          </span>
+                          <Badge variant={habit.consistency > 80 ? 'default' : habit.consistency > 60 ? 'secondary' : 'destructive'} className="text-xs">
+                            {habit.consistency}%
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs text-slate-600">
+                          <span>Consistency</span>
+                          <span>{habit.consistency}%</span>
+                        </div>
+                        <Progress value={habit.consistency} className="h-2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ChartCard>
+
+              {/* Environment & Context Analysis */}
+              <ChartCard
+                title="Environment Impact"
+                icon={<CloudSun className="w-5 h-5" />}
+                subtitle="How environment affects performance"
+              >
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadarChart data={[
+                    { environment: 'Home Office', productivity: 85, focus: 82, creativity: 78, stress: 25 },
+                    { environment: 'Coffee Shop', productivity: 72, focus: 68, creativity: 88, stress: 45 },
+                    { environment: 'Library', productivity: 88, focus: 95, creativity: 65, stress: 15 },
+                    { environment: 'Co-working', productivity: 78, focus: 75, creativity: 85, stress: 35 },
+                    { environment: 'Outdoors', productivity: 45, focus: 38, creativity: 95, stress: 5 }
+                  ]}>
+                    <PolarGrid stroke="#e5e7eb" />
+                    <PolarAngleAxis dataKey="environment" fontSize={10} />
+                    <PolarRadiusAxis 
+                      domain={[0, 100]} 
+                      fontSize={8}
+                      angle={90}
+                      tickCount={5}
+                    />
+                    <Radar
+                      name="Productivity"
+                      dataKey="productivity"
+                      stroke="#3b82f6"
+                      fill="#3b82f6"
+                      fillOpacity={0.1}
+                      strokeWidth={2}
+                    />
+                    <Radar
+                      name="Focus"
+                      dataKey="focus"
+                      stroke="#10b981"
+                      fill="#10b981"
+                      fillOpacity={0.1}
+                      strokeWidth={2}
+                    />
+                    <Radar
+                      name="Creativity"
+                      dataKey="creativity"
+                      stroke="#f59e0b"
+                      fill="#f59e0b"
+                      fillOpacity={0.1}
+                      strokeWidth={2}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
+          </motion.div>
         </TabsContent>
 
         {/* Trends Tab */}
@@ -1100,85 +1569,219 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
           </div>
         </TabsContent>
 
-        {/* AI Insights Tab */}
-        <TabsContent value="insights" className="space-y-6">
-          <ScrollArea className="h-[700px]">
-            <div className="space-y-4 pr-4">
-              <AnimatePresence>
-                {filteredInsights.map((insight, index) => (
-                  <motion.div
-                    key={insight.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card 
-                      className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg border-l-4 ${
-                        insight.priority === 'high' ? 'border-l-red-500 bg-red-50/50' :
-                        insight.priority === 'medium' ? 'border-l-yellow-500 bg-yellow-50/50' :
-                        'border-l-blue-500 bg-blue-50/50'
-                      }`}
-                      onClick={() => setSelectedInsight(insight)}
+        {/* Enhanced AI Insights Tab - Intelligent Analysis */}
+        <TabsContent value="insights" className="space-y-8 mt-6">
+          {/* Section 1: Insight Summary */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+                <Brain className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">AI-Powered Insights</h2>
+                <p className="text-sm text-slate-600">Smart recommendations based on your productivity patterns</p>
+              </div>
+            </div>
+
+            {/* Insight Categories Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <Card className="bg-gradient-to-br from-red-50 to-rose-100 border-red-200">
+                <CardContent className="p-4 text-center">
+                  <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <AlertTriangle className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-2xl font-bold text-red-700">
+                    {filteredInsights.filter(i => i.priority === 'high').length}
+                  </div>
+                  <div className="text-sm text-red-600 font-medium">High Priority</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-amber-50 to-orange-100 border-amber-200">
+                <CardContent className="p-4 text-center">
+                  <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-2xl font-bold text-amber-700">
+                    {filteredInsights.filter(i => i.priority === 'medium').length}
+                  </div>
+                  <div className="text-sm text-amber-600 font-medium">Medium Priority</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
+                <CardContent className="p-4 text-center">
+                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <Lightbulb className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-2xl font-bold text-blue-700">
+                    {filteredInsights.filter(i => i.actionable).length}
+                  </div>
+                  <div className="text-sm text-blue-600 font-medium">Actionable</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
+                <CardContent className="p-4 text-center">
+                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <Trophy className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-2xl font-bold text-green-700">
+                    {filteredInsights.filter(i => i.type === 'achievement').length}
+                  </div>
+                  <div className="text-sm text-green-600 font-medium">Achievements</div>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+
+          {/* Section 2: Priority Insights */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Priority Insights</h3>
+                <p className="text-sm text-slate-600">Most important recommendations for immediate action</p>
+              </div>
+              <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+                <SelectTrigger className="w-32 border-slate-200/70 shadow-sm bg-white/80 backdrop-blur-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Insights</SelectItem>
+                  <SelectItem value="high">High Priority</SelectItem>
+                  <SelectItem value="medium">Medium Priority</SelectItem>
+                  <SelectItem value="low">Low Priority</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <ScrollArea className="h-[600px]">
+              <div className="space-y-4 pr-4">
+                <AnimatePresence>
+                  {filteredInsights.map((insight, index) => (
+                    <motion.div
+                      key={insight.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.05, duration: 0.35 }}
                     >
-                      <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-lg bg-gradient-to-br ${insight.color} text-white`}>
-                          {insight.icon}
-                        </div>
-                        
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-semibold text-gray-900">{insight.title}</h4>
-                            <div className="flex items-center gap-2">
-                              <Badge 
-                                variant={insight.priority === 'high' ? 'destructive' : 
-                                        insight.priority === 'medium' ? 'default' : 'secondary'}
-                              >
-                                {insight.priority}
-                              </Badge>
-                              <ChevronRight className="w-4 h-4 text-gray-400" />
+                      <Card 
+                        className={`cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4 bg-gradient-to-br from-white to-slate-50/70 hover:to-slate-100/50 ${
+                          insight.priority === 'high' ? 'border-l-red-500 hover:border-l-red-600' :
+                          insight.priority === 'medium' ? 'border-l-amber-500 hover:border-l-amber-600' :
+                          'border-l-blue-500 hover:border-l-blue-600'
+                        }`}
+                        onClick={() => setSelectedInsight(insight)}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4">
+                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${insight.color} text-white flex items-center justify-center shadow-lg`}>
+                              {insight.icon}
                             </div>
-                          </div>
-                          
-                          <p className="text-gray-600">{insight.description}</p>
-                          
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Target className="w-4 h-4" />
-                              Impact: {insight.impact}%
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Brain className="w-4 h-4" />
-                              Confidence: {insight.confidence}%
-                            </div>
-                            {insight.actionable && (
-                              <Badge variant="outline" className="text-xs">
-                                Actionable
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          {insight.suggestion && (
-                            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                              <p className="text-sm text-gray-700">
-                                <Lightbulb className="w-4 h-4 inline mr-2" />
-                                {insight.suggestion}
-                              </p>
-                              {insight.estimatedTimeToFix && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Estimated time: {insight.estimatedTimeToFix}
-                                </p>
+                            
+                            <div className="flex-1 space-y-4">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                  <h4 className="font-semibold text-slate-900 text-lg">{insight.title}</h4>
+                                  <div className="flex items-center gap-2">
+                                    <Badge 
+                                      variant={insight.priority === 'high' ? 'destructive' : 
+                                              insight.priority === 'medium' ? 'default' : 'secondary'}
+                                      className="text-xs font-medium"
+                                    >
+                                      {insight.priority.toUpperCase()} PRIORITY
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {insight.category}
+                                    </Badge>
+                                    {insight.actionable && (
+                                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                        <Zap className="w-3 h-3 mr-1" />
+                                        Actionable
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                              </div>
+                              
+                              <p className="text-slate-600 leading-relaxed text-base">{insight.description}</p>
+                              
+                              {/* Metrics */}
+                              <div className="flex items-center gap-6 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <Target className="w-4 h-4 text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold text-slate-900">{insight.impact}%</div>
+                                    <div className="text-xs text-slate-500">Impact</div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <Brain className="w-4 h-4 text-purple-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold text-slate-900">{insight.confidence}%</div>
+                                    <div className="text-xs text-slate-500">Confidence</div>
+                                  </div>
+                                </div>
+                                {insight.estimatedTimeToFix && (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                      <Timer className="w-4 h-4 text-green-600" />
+                                    </div>
+                                    <div>
+                                      <div className="font-semibold text-slate-900">{insight.estimatedTimeToFix}</div>
+                                      <div className="text-xs text-slate-500">Est. Time</div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {insight.suggestion && (
+                                <div className="mt-4 p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200/50">
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                      <Lightbulb className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <h5 className="font-medium text-slate-900">Recommended Action</h5>
+                                      <p className="text-sm text-slate-700 leading-relaxed">{insight.suggestion}</p>
+                                    </div>
+                                  </div>
+                                </div>
                               )}
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </ScrollArea>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                
+                {filteredInsights.length === 0 && (
+                  <div className="text-center py-12 text-slate-500">
+                    <Brain className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium mb-2">No insights match your current filter</p>
+                    <p className="text-sm">Try adjusting the priority filter to see more insights</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </motion.div>
         </TabsContent>
 
         {/* Patterns Tab */}
@@ -1457,6 +2060,30 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
           </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Floating Actions */}
+      <AnalyticsFloatingActions
+        onExportJSON={() => {
+          const { exportAnalyticsData } = require('./analyticsExport');
+          exportAnalyticsData(goals, subgoals, todos, timeframe, 'json');
+        }}
+        onExportCSV={() => {
+          const { exportAnalyticsData } = require('./analyticsExport');
+          exportAnalyticsData(goals, subgoals, todos, timeframe, 'csv');
+        }}
+        onShare={async () => {
+          const { shareAnalytics, generateAnalyticsSummary } = require('./analyticsExport');
+          const summary = generateAnalyticsSummary(
+            analytics.completionRate,
+            analytics.velocityThisWeek,
+            analytics.currentStreak,
+            timeframe
+          );
+          await shareAnalytics('Goal Analytics', summary);
+        }}
+        onRefresh={() => window.location.reload()}
+      />
+      </div>
     </div>
   );
 };
