@@ -8,7 +8,7 @@ interface AIInsightsCardProps {
 
 const AIInsightsCard = ({ goalId, goalName }: AIInsightsCardProps) => (
   <div className="bg-white/70 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-200/80">
-    <GoalAISection goalId={goalId} goalName={goalName} />
+    {/* <GoalAISection goalId={goalId} goalName={goalName} /> */}
   </div>
 );
 

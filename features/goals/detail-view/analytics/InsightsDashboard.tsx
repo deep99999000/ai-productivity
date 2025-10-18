@@ -299,7 +299,6 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
   goalId
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedInsight, setSelectedInsight] = useState<SmartInsight | null>(null);
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [aiInsights, setAiInsights] = useState<AIInsightResponse | null>(null);
@@ -2147,7 +2146,12 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
       </Tabs>
       
       {/* Enhanced AI Recommendation Dialog */}
-      <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
+      <Dialog open={showAIDialog && selectedAIRecommendation !== null} onOpenChange={(open) => {
+        setShowAIDialog(open);
+        if (!open) {
+          setSelectedAIRecommendation(null);
+        }
+      }}>
         <DialogContent className="min-w-5xl max-h-[90vh] overflow-hidden">
           <DialogHeader className="pb-4">
             <div className="flex items-center gap-4">
@@ -2402,7 +2406,10 @@ const EnhancedInsightsDashboard: React.FC<EnhancedInsightsDashboardProps> = ({
               <div className="flex items-center justify-between pt-6 border-t border-slate-200">
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowAIDialog(false)}
+                  onClick={() => {
+                    setShowAIDialog(false);
+                    setSelectedAIRecommendation(null);
+                  }}
                   className="px-6"
                 >
                   <ChevronLeft className="w-4 h-4 mr-2" />

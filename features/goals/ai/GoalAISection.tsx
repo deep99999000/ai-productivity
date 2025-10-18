@@ -164,7 +164,7 @@ export default function GoalAISection({ goalId, goalName }: GoalAISectionProps) 
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-indigo-500" />
           <h3 className="font-medium text-slate-800 text-sm">
-            AI Insights
+            AI Insi
           </h3>
           {insights.length > 0 && (
             <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">

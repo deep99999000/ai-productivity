@@ -14,7 +14,7 @@ interface GoalViewTabsProps {
 
 export function GoalViewTabs({ children }: GoalViewTabsProps) {
   return (
-    <Tabs defaultValue="board" className="w-full">
+    <Tabs defaultValue="overview" className="w-full">
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/80 p-2 mb-6">
         <TabsList className="grid w-full grid-cols-4 bg-transparent gap-2">
           <TabsTrigger

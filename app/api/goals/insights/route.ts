@@ -1,3 +1,6 @@
+import type { Goal } from "@/features/goals/types";
+import type { Subgoal } from "@/features/subGoals/subGoalschema";
+import type { Todo } from "@/features/todo/todoSchema";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 function initModel() {
@@ -36,7 +39,7 @@ interface AIResponseShape {
 function extractContent(response: unknown): string {
   if (!response || typeof response !== "object") return "";
   if ("content" in response) {
-    const c = (response as any).content;
+    const c = (response).content;
     if (typeof c === "string") return c;
     if (c && typeof c === "object" && "text" in c && typeof c.text === "string") return c.text;
   }
@@ -47,9 +50,9 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { goal, subgoals, todos } = body as {
-      goal: any;
-      subgoals: any[];
-      todos: any[];
+      goal: Goal;
+      subgoals: Subgoal[];
+      todos: Todo[];
     };
 
     if (!goal || typeof goal !== "object") {
@@ -159,6 +162,8 @@ Return the JSON analysis now.`;
     try {
       parsed = JSON.parse(raw);
     } catch (e) {
+      console.log(e);
+      
       return Response.json({ error: "Failed to parse AI JSON", raw }, { status: 500 });
     }
 
@@ -180,11 +185,11 @@ Return the JSON analysis now.`;
         const createdAt = r.createdAt && typeof r.createdAt === "string" ? r.createdAt : todayStr;
         return {
           id,
-          type: (r.type as any) ?? "optimization",
+          type: (r.type) ?? "optimization",
           title: String(r.title ?? "Recommendation"),
           description: String(r.description ?? ""),
-          impact: (r.impact as any) ?? "medium",
-          effort: (r.effort as any) ?? "medium",
+          impact: (r.impact) ?? "medium",
+          effort: (r.effort) ?? "medium",
           confidence: Math.max(0, Math.min(100, Math.round(Number(r.confidence ?? 70)))),
           actionable: Boolean(r.actionable ?? true),
           automatable: typeof r.automatable === "boolean" ? r.automatable : undefined,

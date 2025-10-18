@@ -19,7 +19,7 @@ export function MomentumTracker({
   recentWins,
 }: MomentumTrackerProps) {
   return (
-    <Card className="bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 border-orange-200/60 p-6 rounded-2xl">
+    <Card className="bg-white border-black-200/60 p-6 rounded-2xl">
       <div className="flex items-center mb-4">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center">
           <Flame className="w-5 h-5 text-white" />

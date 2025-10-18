@@ -31,15 +31,15 @@ import MilestonesSection from "@/features/goals/detail-view/overview/MilestonesS
 import TasksKanban from "@/features/goals/detail-view/board/TasksKanban";
 import AttachmentsSection from "@/features/goals/detail-view/activity/AttachmentsSection";
 import NotesSection from "@/features/goals/detail-view/activity/NotesSection";
-import GoalSettingsCard from "@/features/goals/detail-view/shared/GoalSettingsCard";
 import OverallProgressCard from "@/features/goals/detail-view/overview/OverallProgressCard";
 import TeamMembersCard from "@/features/goals/detail-view/activity/TeamMembersCard";
 
 // Enhanced components
 import EnhancedTimeline from "@/features/goals/detail-view/overview/EnhancedTimeline";
-import SmartInsightsPanel from "@/features/goals/detail-view/overview/SmartInsightsPanel";
 // New: Real AI insights powered by /api/content/generate/goal
-import AIInsightsCard from "@/features/goals/ai/components/AIInsightsCard";
+// Smart AI insights using /api/goals/insights
+import SmartAIInsightsCard from "@/features/goals/detail-view/overview/SmartAIInsightsCard";
+import CompactAIInsights from "@/features/goals/detail-view/overview/CompactAIInsights";
 
 // Utility formatters
 const formatDate = (date?: string | Date | null) => {
@@ -237,13 +237,16 @@ const { todos:t } = useTodo();
                   <div className="space-y-6">
                     <MomentumTracker {...momentumMetrics} />
                     
-                    {/* Smart Insights Panel */}
-                  
+                    {/* Smart AI Insights using /api/goals/insights */}
+                    <SmartAIInsightsCard 
+                      goalId={goalId}
+                      goal={singleGoal}
+                      subgoals={goalSubgoals}
+                      todos={goalTodos}
+                    />
 
-                    {/* Real AI Insights */}
-                    <AIInsightsCard goalId={goalId} goalName={singleGoal.name} />
                     
-                    <GoalSettingsCard />
+                   
                   </div>
                 </div>
               ),
@@ -277,7 +280,7 @@ const { todos:t } = useTodo();
                   {/* AI Insights in Board View */}
                   <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                     <div className="xl:col-span-2">
-                      {/* Placeholder for quick stats */}
+                      {/* Quick stats */}
                       <div className="bg-white/70 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-200/80 flex items-center justify-between">
                         <div className="flex items-center gap-6 text-sm">
                           <div>
@@ -295,6 +298,15 @@ const { todos:t } = useTodo();
                           </div>
                         </div>
                       </div>
+                    </div>
+                    <div className="xl:col-span-1">
+                      {/* Compact AI Insights for Board View */}
+                      <CompactAIInsights 
+                        goalId={goalId}
+                        goal={singleGoal}
+                        subgoals={goalSubgoals}
+                        todos={goalTodos}
+                      />
                     </div>
                   </div>
                 </div>
@@ -320,7 +332,6 @@ const { todos:t } = useTodo();
                   </div>
                   <div className="space-y-6">
                     <TeamMembersCard />
-                    <GoalSettingsCard />
                   </div>
                 </div>
               ),
