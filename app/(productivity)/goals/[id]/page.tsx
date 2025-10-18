@@ -12,13 +12,13 @@ import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import { ChevronLeft, CalendarDays, Pencil, PlusCircle } from "lucide-react";
 import LoadingGoal from "@/features/goals/components/singlegoal/LoadingGoal";
 import NewTaskButton from "@/features/todo/components/NewTodoButton";
+import EnhancedInsightsDashboard from "@/features/goals/components/detail-view/analytics/EnhancedInsightsDashboard";
 
 // New refined components
 import { 
   GoalViewTabs, 
   FocusModeToggle, 
   MomentumTracker, 
-  AnalyticsCharts, 
   TaskFilterBar 
 } from "@/features/goals/components/detail-view";
 import type { FocusMode, TaskFilters } from "@/features/goals/types";
@@ -27,7 +27,6 @@ import type { FocusMode, TaskFilters } from "@/features/goals/types";
 import { useGoalMetrics, useTaskFiltering } from "@/features/goals/hooks";
 
 // Existing components
-import Timeline from "@/features/goals/components/detail-view/overview/Timeline";
 import MilestonesSection from "@/features/goals/components/detail-view/overview/MilestonesSection";
 import TasksKanban from "@/features/goals/components/detail-view/board/TasksKanban";
 import AttachmentsSection from "@/features/goals/components/detail-view/activity/AttachmentsSection";
@@ -35,7 +34,12 @@ import NotesSection from "@/features/goals/components/detail-view/activity/Notes
 import GoalSettingsCard from "@/features/goals/components/detail-view/shared/GoalSettingsCard";
 import OverallProgressCard from "@/features/goals/components/detail-view/overview/OverallProgressCard";
 import TeamMembersCard from "@/features/goals/components/detail-view/activity/TeamMembersCard";
-import GoalAISection from "@/features/goals/ai/GoalAISection";
+
+// Enhanced components
+import EnhancedTimeline from "@/features/goals/components/detail-view/overview/EnhancedTimeline";
+import GoalRelationshipManager from "@/features/goals/components/detail-view/shared/GoalRelationshipManager";
+import GoalAutomation from "@/features/goals/components/detail-view/shared/GoalAutomation";
+import SmartInsightsPanel from "@/features/goals/components/detail-view/overview/SmartInsightsPanel";
 
 // Utility formatters
 const formatDate = (date?: string | Date | null) => {
@@ -84,7 +88,7 @@ const { todos:t} = useTodo();
   });
 
   // Use custom hooks for better organization
-  const { momentumMetrics, focusCounts, analyticsMetrics } = useGoalMetrics(goalTodos, goalId);
+  const { momentumMetrics, focusCounts } = useGoalMetrics(goalTodos, goalId);
   const { filteredTasks, filteredBacklog, filteredInProgress, filteredDone } = useTaskFiltering(
     goalTodos, 
     focusMode, 
@@ -213,14 +217,12 @@ const { todos:t} = useTodo();
                       formatDate={formatDate}
                     />
                     
-                    {/* Timeline */}
-                    <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/80">
-                      <div className="flex items-center mb-6">
-                        <CalendarDays className="text-indigo-500 mr-3 w-6 h-6" />
-                        <h2 className="text-xl font-bold text-slate-900">Project Timeline</h2>
-                      </div>
-                      <Timeline subgoals={goalSubgoals} todos={goalTodos} />
-                    </div>
+                    {/* Enhanced Timeline */}
+                    <EnhancedTimeline 
+                      goal={singleGoal}
+                      subgoals={goalSubgoals}
+                      todos={goalTodos}
+                    />
 
                     {/* Milestones */}
                     <MilestonesSection
@@ -229,15 +231,27 @@ const { todos:t} = useTodo();
                       goalId={goalId}
                       goalName={singleGoal?.name}
                     />
+
+                    {/* Goal Relationships */}
+                    <GoalRelationshipManager currentGoal={singleGoal} />
                   </div>
 
                   {/* Right Column */}
                   <div className="space-y-6">
                     <MomentumTracker {...momentumMetrics} />
                     
-                    <div className="bg-white/70 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-200/80">
-                      <GoalAISection goalId={goalId} goalName={singleGoal?.name} />
-                    </div>
+                    {/* Smart Insights Panel */}
+                    <SmartInsightsPanel 
+                      goal={singleGoal}
+                      subgoals={goalSubgoals}
+                      todos={goalTodos}
+                    />
+
+                    {/* Goal Automation Quick Access */}
+                    <GoalAutomation 
+                      goalId={goalId} 
+                      goalName={singleGoal?.name || "Goal"} 
+                    />
                     
                     <GoalSettingsCard />
                   </div>
@@ -298,18 +312,12 @@ const { todos:t} = useTodo();
 
               analytics: (
                 <div className="space-y-6">
-                  <AnalyticsCharts {...analyticsMetrics} />
-                  
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <OverallProgressCard
-                      overallProgress={overallProgress}
-                      endDate={singleGoal.endDate}
-                      completedCount={completedCount}
-                      totalMilestones={totalMilestones}
-                      formatDate={formatDate}
-                    />
-                    <MomentumTracker {...momentumMetrics} />
-                  </div>
+                  {/* Enhanced Insights Dashboard with AI-Powered Analytics */}
+                  <EnhancedInsightsDashboard 
+                    goals={[singleGoal].filter(Boolean) as Goal[]}
+                    subgoals={goalSubgoals}
+                    todos={goalTodos}
+                  />
                 </div>
               ),
 
@@ -318,6 +326,11 @@ const { todos:t} = useTodo();
                   <div className="xl:col-span-2 space-y-6">
                     <NotesSection notes={notes} />
                     <AttachmentsSection />
+                    {/* Goal Automation */}
+                    <GoalAutomation 
+                      goalId={goalId} 
+                      goalName={singleGoal?.name || "Goal"} 
+                    />
                   </div>
                   <div className="space-y-6">
                     <TeamMembersCard />
