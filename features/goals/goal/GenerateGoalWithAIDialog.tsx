@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card"; // Make sure this exists
 import { NewGoal } from "@/features/goals/types/goalSchema"; // Ensure this imports $inferInsert
 import GeneratedGoalCard from "./GeneratedGoalCard";
 import useUser from "@/store/useUser";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import { newGoalsAction } from "@/features/goals/actions/goalaction";
 import { API } from "@/lib/actions/getbackendurl";
 

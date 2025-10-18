@@ -1,12 +1,12 @@
-import NewGoalButton from "@/features/goals/components/goal/NewGoalButton";
+import NewGoalButton from "@/features/goals/goal/NewGoalButton";
 import React, { useState } from "react";
-import { Sparkles, BookOpen, TrendingUp, Brain, Zap, GitBranch, BarChart, Target } from "lucide-react";
-import GenerateGoalWithAIDialog from "@/features/goals/components/goal/GenerateGoalWithAIDialog";
-import GenerateGoalsWithAIDialog from "@/features/goals/components/goal/GenerateGoalWithAIDialog";
-import GoalTemplateLibrary from "@/features/goals/components/goal/GoalTemplateLibrary";
+import { BookOpen, BarChart } from "lucide-react";
+
+import GenerateGoalsWithAIDialog from "@/features/goals/goal/GenerateGoalWithAIDialog";
+import GoalTemplateLibrary from "@/features/goals/goal/GoalTemplateLibrary";
 import { Button } from "@/components/ui/button";
 import BaseDialog from "@/components/BaseDialog";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
 import { useTodo } from "@/features/todo/todostore";
 

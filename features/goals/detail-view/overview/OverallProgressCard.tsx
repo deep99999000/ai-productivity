@@ -1,6 +1,6 @@
 "use client";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
-import ProgressBar from "../../ui/ProgressBar";
+import ProgressBar from "../../components/ProgressBar";
 
 interface OverallProgressCardProps {
   overallProgress: number;

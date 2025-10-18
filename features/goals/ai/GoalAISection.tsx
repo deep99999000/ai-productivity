@@ -11,7 +11,7 @@ import { GoalInsightDetailDialog } from "./components/GoalInsightDetailDialog";
 import { GoalInsightCard } from "./components/GoalInsightCard";
 import axios from "axios";
 import { API } from "@/lib/actions/getbackendurl";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
 import { useTodo } from "@/features/todo/todostore";
 

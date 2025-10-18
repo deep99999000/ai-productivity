@@ -4,7 +4,7 @@ import { ShowDate } from '@/components/ShowDate';
 import { categoryStyles } from '@/features/goals/components/catstyle';
 import { DeleteGoalsAction } from '@/features/goals/actions/goalaction';
 import type { Goal } from '@/features/goals/types/goalSchema';
-import { useGoal } from '@/features/goals/store/GoalStore';
+import { useGoal } from '@/features/goals/utils/GoalStore';
 import { useSubgoal } from '@/features/subGoals/subgoalStore';
 import { Calendar, Clock, Trash2, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';

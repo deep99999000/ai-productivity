@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import type { Todo } from "@/features/todo/todoSchema";
-import ProgressBar from "../../ui/ProgressBar";
+import ProgressBar from "../../components/ProgressBar";
 import { useTodo } from "@/features/todo/todostore";
 import {
   deleteTodoFromdb,

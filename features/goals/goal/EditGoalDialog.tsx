@@ -15,7 +15,7 @@ import {
     Calendar,
     Target,
 } from "lucide-react";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import type { Goal } from "@/features/goals/types/goalSchema";
 import { editGoalAction } from "@/features/goals/actions/goalaction";
 

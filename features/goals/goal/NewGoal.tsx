@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { generateUniqueId } from "@/lib/generateUniqueId";
 import { newGoalsAction } from "@/features/goals/actions/goalaction";
 import type { NewGoal } from "@/features/goals/types/goalSchema";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import useUser from "@/store/useUser";
 import { Label } from "@radix-ui/react-label";
 import { Target, Sparkles, Calendar, Tag, FileText, Loader2, Wand2 } from "lucide-react";

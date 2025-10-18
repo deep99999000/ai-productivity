@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { motion } from "motion/react";
 import { ListTodo, CheckCircle2, Target, Flame, BookText, Brain } from "lucide-react";
 import { useTodo } from "@/features/todo/todostore";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import type { Todo } from "@/features/todo/todoSchema";
 import type { Goal } from "@/features/goals/types/goalSchema";
 

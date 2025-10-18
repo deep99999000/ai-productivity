@@ -3,16 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
 import { useTodo } from "@/features/todo/todostore";
 import { getaallsubgoal, toggleGoal } from "@/features/goals/actions/goalaction";
 import type { Goal } from "@/features/goals/types/goalSchema";
 import type { Subgoal } from "@/features/subGoals/subGoalschema";
 import { ChevronLeft, CalendarDays, Pencil, PlusCircle } from "lucide-react";
-import LoadingGoal from "@/features/goals/components/singlegoal/LoadingGoal";
+import LoadingGoal from "@/features/goals/singlegoal/LoadingGoal";
 import NewTaskButton from "@/features/todo/components/NewTodoButton";
-import EnhancedInsightsDashboard from "@/features/goals/components/detail-view/analytics/InsightsDashboard";
+import EnhancedInsightsDashboard from "@/features/goals/detail-view/analytics/InsightsDashboard";
 
 // New refined components
 import { 
@@ -20,26 +20,26 @@ import {
   FocusModeToggle, 
   MomentumTracker, 
   TaskFilterBar 
-} from "@/features/goals/components/detail-view";
+} from "@/features/goals/detail-view";
 import type { FocusMode, TaskFilters } from "@/features/goals/types";
 
 // Custom hooks
-import { useGoalMetrics, useTaskFiltering } from "@/features/goals/hooks";
+import { useGoalMetrics, useTaskFiltering } from "@/features/goals/utils";
 
 // Existing components
-import MilestonesSection from "@/features/goals/components/detail-view/overview/MilestonesSection";
-import TasksKanban from "@/features/goals/components/detail-view/board/TasksKanban";
-import AttachmentsSection from "@/features/goals/components/detail-view/activity/AttachmentsSection";
-import NotesSection from "@/features/goals/components/detail-view/activity/NotesSection";
-import GoalSettingsCard from "@/features/goals/components/detail-view/shared/GoalSettingsCard";
-import OverallProgressCard from "@/features/goals/components/detail-view/overview/OverallProgressCard";
-import TeamMembersCard from "@/features/goals/components/detail-view/activity/TeamMembersCard";
+import MilestonesSection from "@/features/goals/detail-view/overview/MilestonesSection";
+import TasksKanban from "@/features/goals/detail-view/board/TasksKanban";
+import AttachmentsSection from "@/features/goals/detail-view/activity/AttachmentsSection";
+import NotesSection from "@/features/goals/detail-view/activity/NotesSection";
+import GoalSettingsCard from "@/features/goals/detail-view/shared/GoalSettingsCard";
+import OverallProgressCard from "@/features/goals/detail-view/overview/OverallProgressCard";
+import TeamMembersCard from "@/features/goals/detail-view/activity/TeamMembersCard";
 
 // Enhanced components
-import EnhancedTimeline from "@/features/goals/components/detail-view/overview/EnhancedTimeline";
-import GoalRelationshipManager from "@/features/goals/components/detail-view/shared/GoalRelationshipManager";
-import GoalAutomation from "@/features/goals/components/detail-view/shared/GoalAutomation";
-import SmartInsightsPanel from "@/features/goals/components/detail-view/overview/SmartInsightsPanel";
+import EnhancedTimeline from "@/features/goals/detail-view/overview/EnhancedTimeline";
+import GoalRelationshipManager from "@/features/goals/detail-view/shared/GoalRelationshipManager";
+import GoalAutomation from "@/features/goals/detail-view/shared/GoalAutomation";
+import SmartInsightsPanel from "@/features/goals/detail-view/overview/SmartInsightsPanel";
 
 // Utility formatters
 const formatDate = (date?: string | Date | null) => {

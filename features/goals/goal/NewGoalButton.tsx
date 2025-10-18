@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import NewGoalDialog from "@/features/goals/components/goal/NewGoal";
-import GoalTemplateLibrary from "@/features/goals/components/goal/GoalTemplateLibrary";
+import NewGoalDialog from "@/features/goals/goal/NewGoal";
+import GoalTemplateLibrary from "@/features/goals/goal/GoalTemplateLibrary";
 import { useDialog } from "@/hooks/usedialog";
 import { Plus, ChevronDown } from "lucide-react";
 import React, { useState } from "react";

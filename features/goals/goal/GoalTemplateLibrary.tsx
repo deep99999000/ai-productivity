@@ -19,7 +19,7 @@ import {
   Clock,
   CheckCircle2
 } from "lucide-react";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import { useSubgoal } from "@/features/subGoals/subgoalStore";
 import { useTodo } from "@/features/todo/todostore";
 import { newGoalsAction, newSubGoalsAction } from "@/features/goals/actions/goalaction";

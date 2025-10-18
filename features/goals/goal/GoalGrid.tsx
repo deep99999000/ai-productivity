@@ -1,6 +1,6 @@
 "use client";
 
-import GoalCard from "@/features/goals/components/singlegoal/SingleGoal";
+import GoalCard from "@/features/goals/singlegoal/SingleGoal";
 import type { Goal } from "@/features/goals/types/goalSchema";
 
 interface GoalGridProps {

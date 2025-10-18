@@ -1,11 +1,11 @@
 "use client";
 import type { Goal } from "@/features/goals/types/goalSchema";
-import { useGoal } from "@/features/goals/store/GoalStore";
+import { useGoal } from "@/features/goals/utils/GoalStore";
 import { useEffect } from "react";
-import GoalEmptyState from "@/features/goals/components/goal/GoalEmptyState";
-import GoalHeader from "@/features/goals/components/goal/GoalHeader";
-import GoalQuickStats from "@/features/goals/components/goal/GoalQuickStats";
-import GoalGrid from "@/features/goals/components/goal/GoalGrid";
+import GoalEmptyState from "@/features/goals/goal/GoalEmptyState";
+import GoalHeader from "@/features/goals/goal/GoalHeader";
+import GoalQuickStats from "@/features/goals/goal/GoalQuickStats";
+import GoalGrid from "@/features/goals/goal/GoalGrid";
 
 const AllGoals = ({ goals }: { goals: Goal[] }) => {
   const { allGoals, setGoal } = useGoal();
