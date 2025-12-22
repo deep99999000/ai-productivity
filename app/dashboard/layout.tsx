@@ -8,6 +8,6 @@ export default function DashboardShell({
 }: {
   children: React.ReactNode;
 }) {
-  // Reuse the productivity sidebar layout so the sidebar is always visible on the dashboard
+  // 📐 Reuse the productivity sidebar layout so the sidebar is always visible on the dashboard
   return <ProductivityLayout>{children}</ProductivityLayout>;
 }

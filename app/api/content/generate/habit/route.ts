@@ -1,5 +1,6 @@
 // ./app/api/content/generate-habits/route.ts
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { z } from "zod";
 
 
 function initModel() {
@@ -13,10 +14,6 @@ function initModel() {
   });
 }
 
-interface AIResponse {
-  content?: string | { text?: string };
-}
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -26,67 +23,53 @@ export async function POST(req: Request) {
       return Response.json({ error: "Missing or invalid habits array" }, { status: 400 });
     }
 
-    const model = initModel();
-const systemPrompt = `
-You are a professional habit coach AI.
+    if (habits.length === 0) {
+      return Response.json({ error: "Habits array is empty" }, { status: 400 });
+    }
+
+    console.log(`[Habit AI] Generating insights for ${habits.length} habits...`);
+    
+    // Define structured output schema
+    const suggestionSchema = z.object({
+      type: z.enum(["motivation", "optimization", "health", "social", "analytics", "focus", "efficiency", "learning", "creativity", "resilience", "wellness", "strategy", "leadership"]),
+      title: z.string().describe("Very short actionable tip (1-5 words)"),
+      description: z.string().describe("First line explains WHY using user's stats, then bullet points with action steps"),
+      score: z.number().min(0).max(100),
+      actionable: z.boolean(),
+      tags: z.array(z.string()).min(2).max(5),
+      createdAt: z.string().describe("Date in YYYY-MM-DD format"),
+    });
+
+    const outputSchema = z.object({
+      insights: z.array(suggestionSchema).min(4).max(7).describe("4-7 actionable insights based on user's habit data")
+    });
+
+    const model = initModel().withStructuredOutput(outputSchema);
+
+    const prompt = `You are a professional habit coach AI.
 Analyze the user's habits and generate 4-7 actionable insights.
 
-Rules:
-- JSON only, valid syntax.
-- Title: very short actionable tip (1-5 words)
-- Description:
-  1. First line: explain WHY this tip is important using user's habit stats, streaks, or gaps.
-  2. Next lines: bullet points with clear action steps.
-- Use only dates (YYYY-MM-DD) for createdAt.
-- Types: motivation, optimization, health, social, analytics, focus, efficiency, learning, creativity, resilience, wellness, strategy, leadership.
-- Score 0-100, actionable true/false
-- Tags: 2-5 keywords
-
-Do not use generic tips. Be professional, motivational, and practical.
-`;
-
-
-    const userPrompt = `
 User Habit Data:
 ${JSON.stringify(habits, null, 2)}
 
-Generate **AISuggestions** as a personal habit coach. Each suggestion should reference the user's streaks, missed days, or patterns.`;
+Rules:
+- Title: very short actionable tip (1-5 words)
+- Description: First line explains WHY this tip is important using user's habit stats, streaks, or gaps. Next lines are bullet points with clear action steps.
+- Reference actual data: streaks, missed days, or patterns
+- Be professional, motivational, and practical - no generic tips
+- Today's date: ${new Date().toISOString().split("T")[0]}`;
 
-    const response = await model.invoke([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ]);
+    const response = await model.invoke(prompt);
 
-    // Extract AI content
-    let rawContent: string = "";
-    if (typeof response === "object" && response !== null && "content" in response) {
-      const resp = response as AIResponse;
-const c = resp.content;
-rawContent = typeof c === "string" ? c : c?.text ?? "";
-    }
-
-    // Remove code blocks if present
-    rawContent = rawContent.replace(/^```(json)?/, "").replace(/```$/, "").trim();
-
-    // Parse JSON safely
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(rawContent);
-    } catch (err) {
-        console.log(err);
-        
-      return Response.json({ error: "Failed to parse AI JSON", raw: rawContent }, { status: 500 });
-    }
-
-    // Optional: validate array
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      return Response.json({ error: "AI response is not a valid array", data: parsed }, { status: 500 });
-    }
-
-    return Response.json(parsed);
+    console.log(`[Habit AI] Successfully generated ${response.insights.length} insights`);
+    return Response.json(response.insights);
 
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[Habit AI] Error:", message);
+    if (error instanceof Error) {
+      console.error("[Habit AI] Stack:", error.stack);
+    }
     return Response.json({ error: message }, { status: 500 });
   }
 }

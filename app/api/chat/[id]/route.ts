@@ -3,14 +3,17 @@ import { db } from "@/db";
 import { messagesTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+// 📥 GET - Fetch all messages for a room
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 🔍 Extract room ID from params
     const { id } = await params;
     const roomId = id;
 
+    // 📊 Query messages from database
     const messages = await db
       .select()
       .from(messagesTable)
@@ -19,6 +22,7 @@ export async function GET(
 
     return NextResponse.json({ messages });
   } catch (error) {
+    // ⚠️ Handle errors
     console.error("Error fetching messages:", error);
     return NextResponse.json(
       { error: "Failed to fetch messages" },
@@ -27,15 +31,20 @@ export async function GET(
   }
 }
 
+// 📤 POST - Create a new message
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 🔍 Extract room ID from params
     const { id } = await params;
     const roomId = id;
+    
+    // 📝 Parse request body
     const { sender, text } = await request.json();
 
+    // ✅ Validate input
     if (!sender || !text) {
       return NextResponse.json(
         { error: "Sender and text are required" },
@@ -43,6 +52,7 @@ export async function POST(
       );
     }
 
+    // 💾 Insert new message
     const [newMessage] = await db
       .insert(messagesTable)
       .values({
@@ -54,6 +64,7 @@ export async function POST(
 
     return NextResponse.json({ message: newMessage });
   } catch (error) {
+    // ⚠️ Handle errors
     console.error("Error creating message:", error);
     return NextResponse.json(
       { error: "Failed to create message" },

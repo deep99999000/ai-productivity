@@ -2,17 +2,17 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 type UserStore = {
-  user: number;
-  setUser: (id: number) => void;
+  user: string;
+  setUser: (id: string) => void;
   logout: () => void;
 };
 
 const useUser = create<UserStore>()(
   persist(
     (set) => ({
-      user: 0,
+      user: "",
       setUser: (id) => set({ user: id }),
-      logout: () => set({ user: 0 }),
+      logout: () => set({ user: "" }),
     }),
     {
       name: "user-store", // Key in localStorage

@@ -2,7 +2,7 @@
 import useUser from "@/store/useUser";
 import { useEffect } from "react";
 
-const StoreUser = ({ userid }: { userid: number | null }) => {
+const StoreUser = ({ userid }: { userid: string | null }) => {
   const { setUser} = useUser();
   
 

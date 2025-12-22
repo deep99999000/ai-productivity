@@ -7,12 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "motion/react";
 import { ListTodo, CheckCircle2, Target, Flame, BookText, Brain } from "lucide-react";
-import { useTodo } from "@/features/todo/todostore";
-import { useGoal } from "@/features/goals/GoalStore";
-import type { Todo } from "@/features/todo/todoSchema";
-import type { Goal } from "@/features/goals/goalSchema";
+import { useTodo } from "@/features/todo/store";
+import { useGoal } from "@/features/goals/store";
+import type { Todo } from "@/features/todo/schema";
+import type { Goal } from "@/features/goals/schema";
 
-// Extracted dashboard components
+// 📦 Extracted dashboard components
 import StatCard from "@/features/dashboard/components/StatCard";
 import MoodTracker from "@/features/dashboard/components/MoodTracker";
 import TimeTracking from "@/features/dashboard/components/TimeTracking";
@@ -26,11 +26,11 @@ import JournalInsights from "@/features/dashboard/components/JournalInsights";
 import JournalList from "@/features/dashboard/components/JournalList";
 import QuickActionsBar from "@/features/dashboard/components/QuickActionsBar";
 
-// Local series types (avoid depending on apexcharts series typings)
+// 📊 Local series types (avoid depending on apexcharts series typings)
 type AxisSeries = { name: string; data: number[] }[];
 type NonAxisSeries = number[];
 
-// ---- Helper Data ----
+// 🗓 Helper Data
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const tips = [
@@ -41,7 +41,7 @@ const tips = [
   "Start small: consistency beats intensity.",
 ];
 
-// Add emojis for habits (used in weekly tracker labels)
+// 🎭 Add emojis for habits (used in weekly tracker labels)
 const habitEmoji: Record<string, string> = {
   water: "💧",
   workout: "💪",
@@ -51,23 +51,25 @@ const habitEmoji: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  // 🗂 Global stores
   const { todos } = useTodo();
   const { allGoals } = useGoal();
 
+  // 📊 Compute stats
   const totalTodos = Array.isArray(todos) ? (todos as Todo[]).length : 0;
   const completedTodos = Array.isArray(todos) ? (todos as Todo[]).filter((t) => t.isDone).length : 0;
   const activeGoals = Array.isArray(allGoals)
     ? (allGoals as Goal[]).filter((g) => g.status !== "Completed").length
     : 0;
 
-  // Ensure AI Tip rotator state exists
+  // 💡 AI Tip rotator state
   const [tipIndex, setTipIndex] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTipIndex((i) => (i + 1) % tips.length), 6000);
     return () => clearInterval(id);
   }, []);
 
-  // Focus timer (simple Pomodoro style)
+  // ⏱️ Focus timer (simple Pomodoro style)
   const DEFAULT_SECONDS = 25 * 60;
   const [secondsLeft, setSecondsLeft] = useState(DEFAULT_SECONDS);
   const [running, setRunning] = useState(false);
@@ -79,7 +81,7 @@ export default function DashboardPage() {
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
 
-  // Mood tracker state
+  // 😊 Mood tracker state
   const [moodHistory, setMoodHistory] = useState<{ day: string; mood: number }[]>([
     { day: "Mon", mood: 3 },
     { day: "Tue", mood: 4 },
@@ -94,7 +96,7 @@ export default function DashboardPage() {
     setMoodHistory((h) => (h.length >= 7 ? [...h.slice(1), { day, mood: val }] : [...h, { day, mood: val }]));
   };
 
-  // Simple Habits (done/undone)
+  // ✅ Simple Habits (done/undone)
   const [habits, setHabits] = useState(
     [
       { id: "water", name: "Drink Water", done: true },
@@ -106,7 +108,7 @@ export default function DashboardPage() {
   );
   const toggleHabit = (id: string) => setHabits((hs) => hs.map((h) => (h.id === id ? { ...h, done: !h.done } : h)));
 
-  // Add simple week-wise habit completion state (Mon..Sun)
+  // 📅 Add simple week-wise habit completion state (Mon..Sun)
   const [habitWeek] = useState<Record<string, boolean[]>>({
     water: [true, false, true, true, false, false, true],
     workout: [false, false, true, false, true, false, false],
@@ -115,10 +117,10 @@ export default function DashboardPage() {
     sleep: [false, false, false, true, true, false, true],
   });
 
-  // ---- Charts config ----
+  // 📈 Charts config
   const baseAnimation = { animations: { enabled: true, easing: "easeinout", speed: 600 } } as ApexOptions;
 
-  // Format hours to `Xh Ym`
+  // 🕒 Format hours to `Xh Ym`
   const formatHM = (hours: number) => {
     const totalMin = Math.round((hours ?? 0) * 60);
     const h = Math.floor(totalMin / 60);
@@ -126,7 +128,7 @@ export default function DashboardPage() {
     return `${h}h ${m}m`;
   };
 
-  // Shared Apex theme (toolbar off, light tooltip, subtle grid)
+  // 🎨 Shared Apex theme (toolbar off, light tooltip, subtle grid)
   const apexTheme: ApexOptions = {
     chart: { toolbar: { show: false }, animations: { enabled: true } },
     grid: { strokeDashArray: 4 },
@@ -232,6 +234,7 @@ export default function DashboardPage() {
     ...baseAnimation,
   };
 
+  // 🎯 Goal radials computation
   const goalRadials = useMemo(() => {
     const toProgress = (status?: string): number => {
       const s = (status || "").toLowerCase();
@@ -264,7 +267,7 @@ export default function DashboardPage() {
     ...baseAnimation,
   };
 
-  // Compute "today" todos first
+  // 📅 Compute "today" todos first
   const isSameDay = (d1: Date, d2: Date) =>
     d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
   const parsePossibleDate = (val: unknown): Date | null => {
@@ -287,6 +290,7 @@ export default function DashboardPage() {
     return (todayList.length ? todayList : list).slice(0, 5);
   }, [todos]);
 
+  // ⏭️ Next task
   const nextTask = todaysTodos[0] ?? null;
 
   const fadeIn = {
@@ -300,7 +304,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="container mx-auto max-w-7xl px-6 md:px-8 py-6 md:py-8">
-        {/* Header */}
+        {/* 🎯 Header */}
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -312,7 +316,7 @@ export default function DashboardPage() {
             <Badge className="bg-blue-600 text-white px-3 py-1 rounded-lg shadow">Beta</Badge>
           </div>
 
-          {/* AI Tip as clean quote card */}
+          {/* 💡 AI Tip as clean quote card */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             <Card className="border-slate-200/80">
               <CardContent className="p-4 md:p-5">
@@ -332,7 +336,7 @@ export default function DashboardPage() {
           </motion.div>
         </div>
 
-        {/* Stats */}
+        {/* 📊 Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-6">
           <motion.div {...fadeIn}><StatCard title="Total Tasks" value={totalTodos} icon={ListTodo} /></motion.div>
           <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }}>
@@ -362,52 +366,52 @@ export default function DashboardPage() {
           </motion.div>
         </div>
 
-        {/* Main 2-column layout: Left (charts) | Right (quick insights) */}
+        {/* 📐 Main 2-column layout: Left (charts) | Right (quick insights) */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-          {/* Left: charts, goals, habit week grid, mood+time together */}
+          {/* 📊 Left: charts, goals, habit week grid, mood+time together */}
           <div className="xl:col-span-2 space-y-5">
-            {/* Mood Tracking + Time Tracking together (moved to top) */}
+            {/* 😊 Mood Tracking + ⏰ Time Tracking together (moved to top) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {/* Mood Tracking */}
+              {/* 😊 Mood Tracking */}
               <motion.div {...fadeIn}>
                 <MoodTracker moodHistory={moodHistory} addMood={addMood} options={moodOptions} series={moodSeries} />
               </motion.div>
 
-              {/* Time Tracking */}
+              {/* ⏰ Time Tracking */}
               <motion.div {...fadeIn}>
                 <TimeTracking options={timeOptions} daily={timeSeries as number[]} weekly={timeWeeklySeries as number[]} monthly={timeMonthlySeries as number[]} />
               </motion.div>
             </div>
 
-            {/* Productivity Trend (reintroduced, compact) */}
+            {/* 📈 Productivity Trend (reintroduced, compact) */}
             <motion.div {...fadeIn}>
               <ProductivityTrend options={weeklyTasksOptions} series={weeklyTasksSeries} />
             </motion.div>
 
-            {/* Habit Week (now view-only with emojis) */}
+            {/* ✅ Habit Week (now view-only with emojis) */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
               <HabitWeek weekDays={weekDays} habits={habits} habitEmoji={habitEmoji} habitWeek={habitWeek} />
             </motion.div>
 
-            {/* Goal Progress moved to bottom */}
+            {/* 🎯 Goal Progress moved to bottom */}
             <motion.div {...fadeIn}>
               <GoalRadials radials={goalRadials} radialBase={radialBase} />
             </motion.div>
           </div>
 
-          {/* Right: quick insights stack */}
+          {/* ⚡ Right: quick insights stack */}
           <div className="space-y-5">
-            {/* Next Task FIRST */}
+            {/* ⏭️ Next Task FIRST */}
             <motion.div {...fadeIn}>
               <NextTaskCard nextTask={nextTask} onFocus={() => setRunning(true)} />
             </motion.div>
 
-            {/* Habits Today */}
+            {/* ✅ Habits Today */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
               <HabitsToday habits={habits} toggleHabit={toggleHabit} />
             </motion.div>
 
-            {/* Focus Timer */}
+            {/* ⏱️ Focus Timer */}
             <motion.div {...fadeIn}>
               <FocusTimer
                 mm={mm}
@@ -422,12 +426,12 @@ export default function DashboardPage() {
               />
             </motion.div>
 
-            {/* Journal Insights */}
+            {/* 💭 Journal Insights */}
             <motion.div {...fadeIn}>
               <JournalInsights />
             </motion.div>
 
-            {/* Last 5 Journal Entries */}
+            {/* 📔 Last 5 Journal Entries */}
             <motion.div {...fadeIn}>
               <JournalList />
             </motion.div>
@@ -435,7 +439,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Actions Bar */}
+      {/* ⚡ Quick Actions Bar */}
       <QuickActionsBar onStartFocus={() => setRunning(true)} onLogMood={() => addMood(4)} />
     </div>
   );

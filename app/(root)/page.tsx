@@ -1,13 +1,13 @@
-// ./app/(root)/new/page.tsx
 "use client"
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 
 const SecondMindLanding = () => {
+  // 🎨 UI state
   const [darkMode, setDarkMode] = useState(false);
   
-  // Animation variants
+  // ✨ Animation variants
   const fadeInUp = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
@@ -43,7 +43,7 @@ const SecondMindLanding = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Header */}
+      {/* 🎯 Header */}
       <motion.header 
         className="container mx-auto px-4 py-6 flex justify-between items-center"
         initial={{ opacity: 0, y: -30 }}
@@ -124,7 +124,7 @@ const SecondMindLanding = () => {
         </div>
       </motion.header>
 
-      {/* Hero Section */}
+      {/* 🚀 Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-24 flex flex-col md:flex-row items-center">
         <motion.div 
           className="md:w-1/2 mb-12 md:mb-0"

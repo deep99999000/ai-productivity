@@ -4,6 +4,8 @@ import {
   generateUploadDropzone,
 } from "@uploadthing/react";
 
-
+// 📤 Upload button component
 export const UploadButton = generateUploadButton<OurFileRouter>();
+
+// 📥 Upload dropzone component
 export const UploadDropzone = generateUploadDropzone<OurFileRouter>();
