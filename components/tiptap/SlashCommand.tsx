@@ -16,6 +16,7 @@ import Suggestion from "@tiptap/suggestion";
 import { ReactRenderer } from "@tiptap/react";
 import tippy, { Instance } from "tippy.js";
 import "tippy.js/dist/tippy.css";
+import "tippy.js/themes/light.css";
 
 interface CommandItemProps {
   title: string;
@@ -290,6 +291,8 @@ export const renderItems = () => {
         placement: "bottom-start",
         maxWidth: 400,
         offset: [0, 8],
+        theme: "light",
+        arrow: false,
         popperOptions: {
           strategy: "fixed",
           modifiers: [

@@ -31,6 +31,32 @@ export const getgoalAttachments = async (subgoal_id: number, user_id: string) =>
   }
 };
 
+// 📥 Get all attachments for a project
+export const getProjectAttachments = async (project_id: number, user_id: string) => {
+  try {
+    const res = await db
+      .select({
+        id: attachmentTable.id,
+        name: attachmentTable.name,
+        description: attachmentTable.description,
+        project_id: attachmentTable.project_id,
+        goal_id: attachmentTable.goal_id,
+        user_id: attachmentTable.user_id,
+        url: attachmentTable.url,
+        uploaded_by_name: usersTable.name,
+        uploaded_by_image: usersTable.image,
+      })
+      .from(attachmentTable)
+      .leftJoin(usersTable, eq(attachmentTable.user_id, usersTable.id))
+      .where(eq(attachmentTable.project_id, project_id));
+    return res;
+  } catch (e) {
+    // ⚠️ Handle error
+    console.error("getProjectAttachments error", e);
+    return [];
+  }
+};
+
 // 🗑️ Delete an attachment
 export const deleteAttachment = async (id: number, user_id: string) => {
   try {

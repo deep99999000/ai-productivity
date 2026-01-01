@@ -1,12 +1,13 @@
-import React from 'react'
+import ProjectsDashboard from '@/features/projects/components/dashboard/ProjectsDashboard';
+import { getuser } from '@/lib/actions/getuser';
 
-const page = () => {
+const ProjectsPage = async () => {
+  // Get user ID from session
+  const userId = await getuser();
+  
   return (
-    <div className='h-screen flex justify-center item-center text-7xl'>
-      {/* 🚧 Coming Soon message */}
-      Coming Soon......
-    </div>
-  )
-}
+    <ProjectsDashboard user_id={userId ?? ""} />
+  );
+};
 
-export default page
+export default ProjectsPage;

@@ -555,3 +555,25 @@ ul[data-type="taskList"] li[data-checked="true"] > div {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+/* Tippy.js Slash Command Styles - Clean Design */
+.tippy-box[data-theme~='light'] {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.tippy-box[data-theme~='light'] .tippy-content {
+  padding: 0;
+  background: transparent;
+}
+
+.tippy-box {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.tippy-content {
+  padding: 0 !important;
+}

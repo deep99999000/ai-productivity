@@ -22,6 +22,34 @@
       "when": 1766237610063,
       "tag": "0002_complex_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766758419327,
+      "tag": "0003_chubby_malice",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766758682152,
+      "tag": "0004_bumpy_morlocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1766759154646,
+      "tag": "0005_vengeful_vindicator",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1766759203973,
+      "tag": "0006_curvy_praxagora",
+      "breakpoints": true
     }
   ]
 }

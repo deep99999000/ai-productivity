@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
+      {
+        protocol: "https",
+        hostname: "getstream.io",
+      },
+      {
+        protocol: "https",
+        hostname: "stream-io-cdn.com",
+      },
     ],
   },
   typescript: {
